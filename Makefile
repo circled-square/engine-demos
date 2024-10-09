@@ -1,9 +1,7 @@
 # a simple makefile for running cmake, compiling and running the project
-# without using an IDE or having to remember all the flags
+# without using an IDE or having to remember all the flags. it's more like a
+# script actually, since i do not actually use Make's features
 
-all: build/debug/src/main
-build/debug/src/main: configure_debug compile_debug
-build/release/src/main: configure_release compile_release
 
 # add -fsanitize=address to check memory errors
 CXXFLAGS="-Wall -Werror -Wpedantic -Wnon-virtual-dtor"
@@ -14,28 +12,30 @@ CMAKE_FLAGS=-G ${GENERATOR} -S ./
 CMAKE_DEBUG_FLAGS=-DCMAKE_BUILD_TYPE=Debug ${CMAKE_FLAGS} -B build/debug
 CMAKE_RELEASE_FLAGS=-DCMAKE_BUILD_TYPE=Release ${CMAKE_FLAGS} -B build/release
 
-configure_debug: src/* src/**
+all:
+	make configure_debug
+	make compile_debug
+
+configure_debug:
 	cmake ${CMAKE_DEBUG_FLAGS}
 
-configure_release: src/* src/**
+configure_release:
 	cmake ${CMAKE_RELEASE_FLAGS}
 
-compile_debug: src/* src/**/*
+compile_debug:
 	ninja -C build/debug/
 
-compile_release: src/* src/**/*
+compile_release:
 	ninja -C build/release/
 
 compile_with_clang_tidy: src/* src/**/*
 	cmake ${CMAKE_CLANG_TIDY_FLAG} ${CMAKE_DEBUG_FLAGS} -B build/debug_clangtidy
-	make -C build/debug_clangtidy
+	ninja -C build/debug_clangtidy
 
 
-run: build/debug/src/main
+run:
+	make all
 	build/debug/src/main
-
-run_release: build/release/src/main
-	build/release/src/main
 
 clean_deps:
 	rm -fr build/debug/_deps
