@@ -10,10 +10,26 @@ namespace scene_demos {
     using namespace glm;
     using namespace engine;
 
-    freecam_demo::freecam_demo(std::shared_ptr<std::forward_list<const char*>> scene_names)
-        : menu_demo(std::move(scene_names)), m_current_y_rotation(0.f)
-    {
-        application_channel().to_app.wants_mouse_cursor_captured = true;
+    static glm::mat4 to_rotation_mat(glm::mat4 mat) {
+        mat[3] = vec4(0);
+        return mat;
+    }
+    static glm::mat4 clear_first_3_rows(glm::mat4 mat) {
+        mat[0] = mat[1] = mat[2] = vec4(0);
+        return mat;
+    }
+
+    struct freecam_state  {
+        bool up = false, down = false, left = false, right = false, fwd = false, bwd = false, go_faster = false;
+        float current_y_rotation = 0.f;
+        float move_speed = 30.0;
+    };
+
+    scene make_freecam_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
+        application_channel_t::to_app_t to_app { .wants_mouse_cursor_captured = true };
+        node root("");
+
+        root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
         node halftone_viewport("halftone_vp", engine::viewport(
             get_rm().new_from<shader>(shader::from_file("src/shaders/halftone_postfx.glsl")),
@@ -24,83 +40,70 @@ namespace scene_demos {
             get_rm().new_from<shader>(shader::from_file("src/shaders/transparent_postfx.glsl")),
             glm::vec2(1./3.)
         ));
-        node camera_node("camera", engine::camera(), glm::translate(glm::mat4(1), glm::vec3(0, 2, 0)));
+
+        rc<const stateless_script> freecam_script = get_rm().new_from(stateless_script {
+            .construct = []() { return std::any(freecam_state()); },
+            .process = [](node& n, std::any& ss, application_channel_t& app_chan) {
+                freecam_state& s = *std::any_cast<freecam_state>(&ss);
+
+                for(const event_variant_t& event : app_chan.from_app.events) {
+                    pattern_match_visit(event,
+                    [&s, &app_chan](const key_event_t& e) {
+                            using namespace engine::window;
+                            if (e.key == key_codes::SPACE) {
+                                s.up = e.action != key_action_codes::RELEASE;
+                            } else if (e.key == key_codes::LEFT_CONTROL) {
+                                s.down = e.action != key_action_codes::RELEASE;
+                            } else if (e.key == key_codes::A) {
+                                s.left = e.action != key_action_codes::RELEASE;
+                            } else if (e.key == key_codes::D) {
+                                s.right = e.action != key_action_codes::RELEASE;
+                            } else if (e.key == key_codes::W) {
+                                s.fwd = e.action != key_action_codes::RELEASE;
+                            } else if (e.key == key_codes::S) {
+                                s.bwd = e.action != key_action_codes::RELEASE;
+                            } else if (e.key == key_codes::LEFT_SHIFT) {
+                                s.go_faster = e.action != key_action_codes::RELEASE;
+                            } else if (e.key == key_codes::C && e.action == key_action_codes::RELEASE) {
+                                //toggle mouse capture
+                                app_chan.to_app.wants_mouse_cursor_captured = !app_chan.from_app.mouse_cursor_is_captured;
+                            }
+                    }, [&s, &n](const mouse_move_event_t& e) {
+                        glm::vec2 movement = e.movement;
+                        constexpr float movement_multiplier = 0.002;
+                        movement *= movement_multiplier;
+
+                        float old_rotation = s.current_y_rotation;
+                        s.current_y_rotation += movement.y;
+                        s.current_y_rotation = std::clamp(s.current_y_rotation, -glm::pi<float>()/2.f * 0.99f, glm::pi<float>()/2.f * 0.99f);
+                        movement.y = s.current_y_rotation - old_rotation;
+
+                        auto& cam= n.transform();
+
+                        cam = glm::rotate(glm::mat4(1), -movement.x, glm::vec3(0,1,0)) * to_rotation_mat(cam) + clear_first_3_rows(cam);
+                        cam = glm::rotate(cam, -movement.y, glm::vec3(1,0,0));
+                    });
+                }
+
+                glm::vec3 movement = glm::vec3(
+                    (s.right?1:0) - (s.left?1:0),
+                    (s.up?1:0) - (s.down?1:0),
+                    (s.bwd?1:0) - (s.fwd?1:0)
+                );
+                movement *= s.move_speed * app_chan.from_app.delta * (s.go_faster ? 3.0 : 1.0);
+
+                n.transform() = glm::translate(n.transform(), movement);
+            },
+        });
+
+
+        node camera_node("camera", engine::camera(), glm::translate(glm::mat4(1), glm::vec3(0, 2, 0)), script(std::move(freecam_script)));
 
         halftone_viewport.add_child(std::move(camera_node));
         halftone_viewport.add_child(node(get_rm().get_nodetree_from_gltf("resources/castlebl.glb")));
         transparent_viewport.add_child(std::move(halftone_viewport));
-        get_root().add_child(std::move(transparent_viewport));
+        root.add_child(std::move(transparent_viewport));
 
-        freecam_demo::on_mouse_move({0,0}, {0,0}); // TODO: what is this?
-    }
-
-    freecam_demo::freecam_demo(freecam_demo &&o)
-        : menu_demo(std::move(o)),
-          m_current_y_rotation(o.m_current_y_rotation),
-          m_keys() {}
-
-    void freecam_demo::update(float delta) {
-        constexpr float move_speed = 30.0;
-
-        auto& cam_node = get_node("/transparent_vp/halftone_vp/camera");
-
-        glm::vec3 movement = glm::vec3(
-            (m_keys.right?1:0) - (m_keys.left?1:0),
-            (m_keys.up?1:0) - (m_keys.down?1:0),
-            (m_keys.bwd?1:0) - (m_keys.fwd?1:0)
-        );
-        movement *= move_speed * delta * (m_keys.go_faster ? 3.0 : 1.0);
-
-        cam_node.transform() = glm::translate(cam_node.transform(), movement);
-    }
-
-    const char* freecam_demo::get_name() const { return "freecam demo"; }
-
-    void freecam_demo::on_key_press(int key, int scancode, int action, int mods) {
-        using namespace engine::window;
-        if (key == key_codes::SPACE) {
-            m_keys.up = action != key_action_codes::RELEASE;
-        } else if (key == key_codes::LEFT_CONTROL) {
-            m_keys.down = action != key_action_codes::RELEASE;
-        } else if (key == key_codes::A) {
-            m_keys.left = action != key_action_codes::RELEASE;
-        } else if (key == key_codes::D) {
-            m_keys.right = action != key_action_codes::RELEASE;
-        } else if (key == key_codes::W) {
-            m_keys.fwd = action != key_action_codes::RELEASE;
-        } else if (key == key_codes::S) {
-            m_keys.bwd = action != key_action_codes::RELEASE;
-        } else if (key == key_codes::LEFT_SHIFT) {
-            m_keys.go_faster = action != key_action_codes::RELEASE;
-        } else if (key == key_codes::C && action == key_action_codes::RELEASE) {
-            //toggle mouse capture
-            application_channel().to_app.wants_mouse_cursor_captured =
-                !application_channel().from_app.mouse_cursor_is_captured;
-        }
-    }
-
-    static glm::mat4 to_rotation_mat(glm::mat4 mat) {
-        mat[3] = vec4(0);
-        return mat;
-    }
-    static glm::mat4 clear_first_3_rows(glm::mat4 mat) {
-        mat[0] = mat[1] = mat[2] = vec4(0);
-        return mat;
-    }
-
-    void freecam_demo::on_mouse_move(glm::vec2 position, glm::vec2 movement) {
-        constexpr float movement_multiplier = 0.002;
-        movement *= movement_multiplier;
-
-        float old_rotation = m_current_y_rotation;
-        m_current_y_rotation += movement.y;
-        m_current_y_rotation = std::clamp(m_current_y_rotation, -glm::pi<float>()/2.f * 0.99f, glm::pi<float>()/2.f * 0.99f);
-        movement.y = m_current_y_rotation - old_rotation;
-
-        auto& cam= get_node("/transparent_vp/halftone_vp/camera").transform();
-
-
-        cam = glm::rotate(glm::mat4(1), -movement.x, glm::vec3(0,1,0)) * to_rotation_mat(cam) + clear_first_3_rows(cam);
-        cam = glm::rotate(cam, -movement.y, glm::vec3(1,0,0));
+        return engine::scene(scene_name, std::move(root), std::move(to_app));
     }
 } // scene_demos

@@ -8,24 +8,28 @@
 #include "freecam_demo/freecam_demo.hpp"
 
 
-static engine::rc<engine::basic_scene> get_start_scene();
+static engine::rc<engine::scene> get_start_scene();
 
 int main() {
-    engine::entry_point({1280, 720}, "demo", engine::window::window_creation_hints::MAXIMIZED, get_start_scene);
+    engine::entry_point({1280, 720}, "demo", engine::window::creation_hints::MAXIMIZED, get_start_scene);
 }
 
-static engine::rc<engine::basic_scene> get_start_scene() {
+static engine::rc<engine::scene> get_start_scene() {
     auto names = std::make_shared<std::forward_list<const char*>>();
     auto add_scene = [&](const char* name, auto scene_ctor) {
         names->push_front(name);
-        engine::get_rm().dbg_add_scene_constructor(name, std::function(std::move(scene_ctor)));
+        engine::get_rm().dbg_add_scene_constructor(name,
+            std::function([names, scene_ctor=std::move(scene_ctor), scene_name=std::move(name)](){
+                return scene_ctor(scene_name);
+            })
+        );
     };
 
-    add_scene("texture demo", [=]() { return scene_demos::texture_demo(names); });
-    add_scene("3d demo", [=]() { return scene_demos::three_dimensional_demo(names); });
-    add_scene("gltf demo", [=]() { return scene_demos::gltf_demo(names); });
-    add_scene("postfx demo", [=]() { return scene_demos::postfx_demo(names); });
-    add_scene("freecam demo", [=]() { return scene_demos::freecam_demo(names); });
+    add_scene("texture demo", [=](const char* name) { return scene_demos::make_texture_demo(names, name); });
+    add_scene("3d demo", [=](const char* name) { return scene_demos::make_3d_demo(names, name); });
+    add_scene("gltf demo", [=](const char* name) { return scene_demos::make_gltf_demo(names, name); });
+    add_scene("postfx demo", [=](const char* name) { return scene_demos::make_postfx_demo(names, name); });
+    add_scene("freecam demo", [=](const char* name) { return scene_demos::make_freecam_demo(names, name); });
 
     return engine::get_rm().get_scene("freecam demo");
 }

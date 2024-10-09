@@ -60,46 +60,54 @@ namespace scene_demos {
         {7, 4, 0},
     };
 
-    three_dimensional_demo::three_dimensional_demo(std::shared_ptr<std::forward_list<const char*>> scene_names)
-        : menu_demo(std::move(scene_names))
-    {
-        engine::node cubes_container("cubes_container");
+    struct camera_script_state  {
+        float time = 0.f;
+    };
 
-        gal::vertex_array cube_vao = gal::vertex_array::make<vertex_t>(vertex_data, std::span(indices.data(), indices.size()));
-        material cube_material = make_retro_3d_material(get_rm().get_texture("resources/example.png"));
-        mesh cube(cube_material, get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
+    scene make_3d_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
+        node root("");
 
-        for(int x = -1; x <= 1; x++) {
-            for(int y = -1; y <= 1; y++) {
-                for(int z = -1; z <= 1; z++) {
-                    cubes_container.add_child(node(
-                        std::format("cube_{},{},{}", x, y, z),
-                        cube,
-                        scale(translate(mat4(1), vec3(x,y,z)), vec3(.5, .5, .5))
-                    ));
+        root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
+
+        rc<const stateless_script> container_script = get_rm().new_from(stateless_script {
+            .attach = [](node& n, std::any&) {
+                rc<const stateless_script> centre_cube_script = get_rm().new_from(stateless_script {
+                    .process = [](node& n, std::any&, application_channel_t& app_chan) {
+                        n.transform() = rotate(n.transform(), app_chan.from_app.delta * pi / 8, z_axis + y_axis / 2.f);
+                    },
+                });
+                gal::vertex_array cube_vao = gal::vertex_array::make<vertex_t>(vertex_data, std::span(indices.data(), indices.size()));
+                material cube_material = make_retro_3d_material(get_rm().get_texture("resources/example.png"));
+                mesh cube(cube_material, get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
+
+                for(int x = -1; x <= 1; x++) {
+                    for(int y = -1; y <= 1; y++) {
+                        for(int z = -1; z <= 1; z++) {
+                            n.add_child(node(
+                                std::format("cube_{},{},{}", x, y, z),
+                                cube,
+                                scale(translate(mat4(1), vec3(x,y,z)), vec3(.5, .5, .5))
+                            ));
+                        }
+                    }
                 }
+                n.get_from_path("cube_0,0,0").attach_script(std::move(centre_cube_script));
+            },
+        });
+        root.add_child(engine::node("cubes_container",engine::null_node_data(), glm::mat4(1), script(std::move(container_script))));        rc<const stateless_script> cam_script = get_rm().new_from(stateless_script {
+            .construct = []() { return std::any(camera_script_state()); },
+            .process = [](node& n, std::any& ss, application_channel_t& app_chan) {
+                camera_script_state& s = *std::any_cast<camera_script_state>(&ss);
+                s.time += app_chan.from_app.delta;
+
+                vec3 pos = { sin(s.time)*4, sin(s.time)*4, cos(s.time)*4 };
+
+                n.transform() = glm::inverse(glm::lookAt(pos, vec3(0), vec3(0,1,0)));
             }
-        }
-        get_root().add_child(std::move(cubes_container));
+        });
 
-        get_root().add_child(node("camera", camera()));
+        root.add_child(node("camera", camera(), glm::translate(glm::mat4(1), glm::vec3(0,0,4)), script(std::move(cam_script))));
+
+        return scene(scene_name, std::move(root));
     }
-
-    three_dimensional_demo::three_dimensional_demo(three_dimensional_demo &&o) : menu_demo(std::move(o)) {}
-
-    void three_dimensional_demo::update(float delta) {
-        //rotate the central cube
-        mat4& model_mat = get_node("/cubes_container/cube_0,0,0").transform();
-        model_mat = rotate(model_mat,  delta * pi / 8, z_axis + y_axis / 2.f);
-
-        static float current_time = 0.0f;
-        current_time += delta;
-
-        vec3 pos = { sin(current_time)*4, sin(current_time)*4, cos(current_time)*4 };
-
-        node& cam = get_node("/camera");
-        cam.transform() = glm::inverse(glm::lookAt(pos, -pos, vec3(0,1,0)));
-    }
-
-    const char* three_dimensional_demo::get_name() const { return "3d demo"; }
 } // namespace scene_demos

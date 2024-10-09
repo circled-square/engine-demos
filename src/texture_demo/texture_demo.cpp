@@ -1,8 +1,11 @@
 #include "texture_demo.hpp"
 #include <glm/glm.hpp>
 #include <array>
+#include <engine/resources_manager.hpp>
+#include "../menu_demo/menu_demo.hpp"
 
 namespace scene_demos {
+    using namespace engine;
     static gal::vertex_array make_whole_screen_vao() {
         struct post_process_vertex_t {
             glm::vec2 pos;
@@ -31,7 +34,7 @@ namespace scene_demos {
             out vec2 v_tex_coord;\
             void main() { \
                 gl_Position = vec4(pos, 0, 1); \
-                v_tex_coord = (pos + vec2(1,1)) / 2.0; \
+                v_tex_coord = pos/2+.5; \
             }";
         const char *frag = "#version 330 core \n \
             in vec2 v_tex_coord;\
@@ -44,29 +47,70 @@ namespace scene_demos {
         return gal::shader_program(vert, frag);
     }
 
-    texture_demo::texture_demo(std::shared_ptr<std::forward_list<const char*>> scene_names)
-        : menu_demo(std::move(scene_names)),
-          m_renderer(),
-          m_vao(make_whole_screen_vao()),
-          m_shader(make_shader()),
-          m_img("resources/example.png"),
-          m_tex(m_img)
-    {}
+    struct imgui_tex_script_state_t  {
+        gal::renderer renderer = gal::renderer();
+        gal::vertex_array vao = make_whole_screen_vao();
+        gal::shader_program shader = make_shader();
+        gal::texture tex = gal::texture(gal::image("resources/example.png"));
+        engine::framebuffer fbo = engine::framebuffer(engine::get_rm().new_mut_from(gal::texture::empty({512, 512})));
 
-    // Usually we would not be overriding this method, and we would not be using it to render graphics, but this
-    // demo is a bit of a hack to demonstrate GAL usage, not a guide on how to use the engine.
-    // To make sure the menu_demo window is drawn we need to call menu_demo::render_ui after our own rendering.
-    void texture_demo::render_ui(float frame_time) {
-        const int texture_slot = 0;
-        m_tex.bind(texture_slot);
-        m_shader.set_uniform<int>("u_texture_slot", texture_slot);
+        imgui_tex_script_state_t() = default;
+        imgui_tex_script_state_t(imgui_tex_script_state_t&&) = default;
+        imgui_tex_script_state_t(const imgui_tex_script_state_t&) {} // copy ctor simply calls default ctor; only makes sense because the attributes never change
+    };
 
-        m_renderer.clear();
+    engine::scene make_texture_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
+        node root("");
 
-        m_renderer.draw(m_vao, m_shader);
+        root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
-        menu_demo::render_ui(frame_time);
+        rc<const stateless_script> imgui_tex_script = get_rm().new_from(stateless_script {
+            .construct = []() { return std::any(imgui_tex_script_state_t()); },
+            .process = [](node& n, std::any& ss, application_channel_t& c) {
+                imgui_tex_script_state_t& s = *std::any_cast<imgui_tex_script_state_t>(&ss);
+                ImGui::Begin("FboTextureWindow");
+                {
+                    const int texture_slot = 0;
+                    s.tex.bind(texture_slot);
+                    s.shader.set_uniform<int>("u_texture_slot", texture_slot);
+
+                    s.renderer.clear();
+
+                    glViewport(0,0,s.fbo.resolution().x, s.fbo.resolution().y);
+                    s.fbo.bind();
+                    ASSERTS(s.fbo.resolution() == glm::ivec2(512,512));
+                    s.renderer.draw(s.vao, s.shader);
+                    s.fbo.unbind();
+
+                    // Using a Child allow to fill all the space of the window.
+                    // It also alows customization
+                    ImGui::BeginChild("TextureRender1");
+                    // Get the size of the child (i.e. the whole draw size of the windows).
+                    ImVec2 wsize = ImGui::GetWindowSize();
+                    // Because I use the texture from OpenGL, I need to invert the V from the UV.
+                    ImGui::Image((ImTextureID)s.fbo.get_texture()->get_gl_id(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+                    ImGui::EndChild();
+                }
+                ImGui::End();
+
+                ImGui::Begin("TextureWindow");
+                {
+                    // Using a Child allow to fill all the space of the window.
+                    // It also alows customization
+                    ImGui::BeginChild("TextureRender2");
+                    // Get the size of the child (i.e. the whole draw size of the windows).
+                    ImVec2 wsize = ImGui::GetWindowSize();
+                    // Because I use the texture from OpenGL, I need to invert the V from the UV.
+                    ImGui::Image((ImTextureID)s.tex.get_gl_id(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+                    ImGui::EndChild();
+                }
+                ImGui::End();
+            }
+        });
+
+
+        root.add_child(node("imgui-tex-node", null_node_data(), glm::mat4(1), std::move(imgui_tex_script)));
+
+        return scene(scene_name, std::move(root));
     }
-
-    const char* texture_demo::get_name() const { return "texture demo"; }
 } // scene_demos
