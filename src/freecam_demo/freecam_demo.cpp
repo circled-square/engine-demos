@@ -47,7 +47,7 @@ namespace scene_demos {
                 freecam_state& s = *std::any_cast<freecam_state>(&ss);
 
                 for(const event_variant_t& event : app_chan.from_app.events) {
-                    pattern_match_visit(event,
+                    match_variant(event,
                     [&s, &app_chan](const key_event_t& e) {
                             using namespace engine::window;
                             if (e.key == key_codes::SPACE) {
@@ -83,6 +83,7 @@ namespace scene_demos {
                         cam = glm::rotate(glm::mat4(1), -movement.x, glm::vec3(0,1,0)) * to_rotation_mat(cam) + clear_first_3_rows(cam);
                         cam = glm::rotate(cam, -movement.y, glm::vec3(1,0,0));
                     });
+                    match_variant(event, [](auto){});
                 }
 
                 glm::vec3 movement = glm::vec3(
