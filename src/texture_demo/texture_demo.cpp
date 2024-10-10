@@ -49,11 +49,12 @@ namespace scene_demos {
     }
 
     struct imgui_tex_script_state_t  {
+        using framebuffer_t = gal::framebuffer<std::optional<gal::texture>>;
         gal::renderer renderer = gal::renderer();
         gal::vertex_array vao = make_whole_screen_vao();
         gal::shader_program shader = make_shader();
         gal::texture tex = gal::texture(gal::image("resources/example.png"));
-        engine::framebuffer fbo = engine::framebuffer(engine::get_rm().new_mut_from(gal::texture::empty({512, 512})));
+        framebuffer_t fbo = framebuffer_t(gal::texture::empty({512, 512}));
 
         imgui_tex_script_state_t() = default;
         imgui_tex_script_state_t(imgui_tex_script_state_t&&) = default;
