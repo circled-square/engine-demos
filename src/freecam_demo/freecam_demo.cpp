@@ -1,10 +1,10 @@
 #include "freecam_demo.hpp"
 
+#include "../imgui_menu_node.hpp"
 #include <glm/gtc/matrix_transform.hpp>
-#include <engine/gltf_loader.hpp>
 #include <engine/resources_manager.hpp>
 #include <engine/window/window.hpp>
-#include <cstring>
+
 
 namespace scene_demos {
     using namespace glm;

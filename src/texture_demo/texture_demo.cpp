@@ -1,8 +1,9 @@
 #include "texture_demo.hpp"
+
+#include "../imgui_menu_node.hpp"
 #include <glm/glm.hpp>
-#include <array>
 #include <engine/resources_manager.hpp>
-#include "../menu_demo/menu_demo.hpp"
+#include <array>
 
 namespace scene_demos {
     using namespace engine;

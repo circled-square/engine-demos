@@ -1,11 +1,9 @@
-#include "menu_demo.hpp"
-#include <glad/glad.h>
-#include <imgui.h>
-#include <cstring>
-#include <queue>
-#include <set>
+#include "imgui_menu_node.hpp"
 
 #include <engine/resources_manager.hpp>
+#include <imgui.h>
+#include <queue>
+#include <set>
 
 namespace scene_demos {
     using namespace engine;

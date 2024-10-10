@@ -1,4 +1,6 @@
 #include "3d_demo.hpp"
+
+#include "../imgui_menu_node.hpp"
 #include <imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <array>

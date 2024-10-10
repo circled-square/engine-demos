@@ -1,5 +1,6 @@
 #include "gltf_demo.hpp"
 
+#include "../imgui_menu_node.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <engine/resources_manager.hpp>
 
