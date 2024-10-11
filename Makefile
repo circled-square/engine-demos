@@ -39,6 +39,7 @@ run:
 
 clean_deps:
 	rm -fr build/debug/_deps
+	rm -fr build/release/_deps
 
 clean:
 	# instead of doing rm build/* -fr we do this to avoid removing dependencies
