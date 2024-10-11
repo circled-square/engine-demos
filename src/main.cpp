@@ -15,21 +15,23 @@ int main() {
 }
 
 static engine::rc<engine::scene> get_start_scene() {
+    //all scenes need to know the names of all other scenes for imgui_menu_node to work correctly
     auto names = std::make_shared<std::forward_list<const char*>>();
-    auto add_scene = [&](const char* name, auto scene_ctor) {
-        names->push_front(name);
-        engine::get_rm().dbg_add_scene_constructor(name,
-            std::function([names, scene_ctor=std::move(scene_ctor), scene_name=std::move(name)](){
-                return scene_ctor(scene_name);
-            })
-        );
+
+    using scene_ctor_t = engine::scene(*)(std::shared_ptr<std::forward_list<const char*>>, const char*);
+
+    std::pair<const char*, scene_ctor_t> constructors [] = {
+        { "texture demo", scene_demos::make_texture_demo },
+        { "3d demo", scene_demos::make_3d_demo },
+        { "gltf demo", scene_demos::make_gltf_demo },
+        { "postfx demo", scene_demos::make_postfx_demo },
+        { "freecam demo", scene_demos::make_freecam_demo }
     };
 
-    add_scene("texture demo", [=](const char* name) { return scene_demos::make_texture_demo(names, name); });
-    add_scene("3d demo", [=](const char* name) { return scene_demos::make_3d_demo(names, name); });
-    add_scene("gltf demo", [=](const char* name) { return scene_demos::make_gltf_demo(names, name); });
-    add_scene("postfx demo", [=](const char* name) { return scene_demos::make_postfx_demo(names, name); });
-    add_scene("freecam demo", [=](const char* name) { return scene_demos::make_freecam_demo(names, name); });
+    for (auto& [name, ctor] : constructors) {
+        names->push_front(name);
+        engine::get_rm().dbg_add_scene_constructor(name, [=](){ return ctor(names, name); });
+    }
 
     return engine::get_rm().get_scene("freecam demo");
 }
