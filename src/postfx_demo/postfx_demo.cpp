@@ -19,19 +19,19 @@ namespace engine_demos {
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
         node halftone_vp("halftone-vp", engine::viewport(
-            get_rm().new_from<shader>(shader::from_file("src/shaders/halftone_postfx.glsl")),
+            get_rm().new_from<shader>(shader::from_file("assets/shaders/halftone_postfx.glsl")),
             glm::vec2(1./2.)
         ));
 
         node transparent_vp("transparent-vp", engine::viewport(
-            get_rm().new_from<shader>(shader::from_file("src/shaders/transparent_postfx.glsl")),
+            get_rm().new_from<shader>(shader::from_file("assets/shaders/transparent_postfx.glsl")),
             glm::vec2(1./3.)
         ));
 
         node cam("camera", camera(), glm::translate(glm::mat4(1), vec3(0,50,250)));
 
         halftone_vp.add_child(std::move(cam));
-        halftone_vp.add_child(engine::node(engine::get_rm().get_nodetree_from_gltf("resources/castlebl.glb"), "castle"));
+        halftone_vp.add_child(engine::node(engine::get_rm().get_nodetree_from_gltf("assets/castlebl.glb"), "castle"));
         transparent_vp.add_child(std::move(halftone_vp));
         root.add_child(std::move(transparent_vp));
 

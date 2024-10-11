@@ -22,7 +22,7 @@ namespace engine_demos {
                 n.transform() = rotate(n.transform(), c.from_app.delta * pi / 16, y_axis);
             },
         });
-        root.add_child(engine::node(engine::get_rm().get_nodetree_from_gltf("resources/castlebl.glb"), "castle"));
+        root.add_child(engine::node(engine::get_rm().get_nodetree_from_gltf("assets/castlebl.glb"), "castle"));
         root.get_child("castle").attach_script(std::move(rotate_script));
         root.add_child(engine::node("camera", engine::camera(), glm::translate(glm::mat4(1), vec3(0,50,250))));
 

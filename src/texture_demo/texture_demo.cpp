@@ -53,7 +53,7 @@ namespace engine_demos {
         gal::renderer renderer = gal::renderer();
         gal::vertex_array vao = make_whole_screen_vao();
         gal::shader_program shader = make_shader();
-        gal::texture tex = gal::texture(gal::image("resources/example.png"));
+        gal::texture tex = gal::texture(gal::image("assets/example.png"));
         framebuffer_t fbo = framebuffer_t(gal::texture::empty({512, 512}));
 
         imgui_tex_script_state_t() = default;
