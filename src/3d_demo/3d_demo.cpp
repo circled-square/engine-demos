@@ -7,7 +7,7 @@
 #include <engine/resources_manager.hpp>
 #include <engine/materials.hpp>
 
-namespace scene_demos {
+namespace engine_demos {
     using namespace glm;
     using namespace engine;
 
@@ -112,4 +112,4 @@ namespace scene_demos {
 
         return scene(scene_name, std::move(root));
     }
-} // namespace scene_demos
+} // namespace engine_demos

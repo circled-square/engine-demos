@@ -5,7 +5,7 @@
 #include <queue>
 #include <set>
 
-namespace scene_demos {
+namespace engine_demos {
     using namespace engine;
 
     struct menu_state_t {
@@ -104,4 +104,4 @@ namespace scene_demos {
         return node("menu-node", null_node_data(), glm::mat4(1), std::move(stateful_script));
 
     }
-}
+} // namespace engine_demos

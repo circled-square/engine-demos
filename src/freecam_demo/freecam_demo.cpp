@@ -6,7 +6,7 @@
 #include <engine/window/window.hpp>
 
 
-namespace scene_demos {
+namespace engine_demos {
     using namespace glm;
     using namespace engine;
 
@@ -107,4 +107,4 @@ namespace scene_demos {
 
         return engine::scene(scene_name, std::move(root), std::move(to_app));
     }
-} // scene_demos
+} // namespace engine_demos

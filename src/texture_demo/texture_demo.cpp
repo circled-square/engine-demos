@@ -5,7 +5,7 @@
 #include <engine/resources_manager.hpp>
 #include <array>
 
-namespace scene_demos {
+namespace engine_demos {
     using namespace engine;
     static gal::vertex_array make_whole_screen_vao() {
         struct post_process_vertex_t {
@@ -115,4 +115,4 @@ namespace scene_demos {
 
         return scene(scene_name, std::move(root));
     }
-} // scene_demos
+} // namespace engine_demos

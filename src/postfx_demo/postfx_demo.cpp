@@ -4,7 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <engine/resources_manager.hpp>
 
-namespace scene_demos {
+namespace engine_demos {
     using namespace glm;
     using namespace engine;
 
@@ -44,4 +44,4 @@ namespace scene_demos {
 
         return scene(scene_name, std::move(root));
     }
-} // scene_demos
+} // namespace engine_demos
