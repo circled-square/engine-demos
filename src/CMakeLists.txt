@@ -1,5 +1,6 @@
 add_library(imgui_menu_node STATIC imgui_menu_node.cpp)
 target_link_libraries(imgui_menu_node PRIVATE engine)
+target_link_libraries(imgui_menu_node PUBLIC imgui)
 
 add_library(texture_demo STATIC texture_demo/texture_demo.cpp)
 target_link_libraries(texture_demo PRIVATE engine imgui_menu_node)
