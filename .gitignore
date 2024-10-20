@@ -1,5 +1,6 @@
 build/
 .qtc/
 .qtc_clangd/
+.idea/
 CMakeLists.txt.user
 imgui.ini
