@@ -9,8 +9,8 @@ GENERATOR="Ninja" # set to "Unix Makefiles" if ninja is unavailable
 
 CMAKE_CLANG_TIDY_FLAG=-DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=cppcoreguidelines-\*,readability-\*"
 CMAKE_FLAGS=-G ${GENERATOR} -S ./
-CMAKE_DEBUG_FLAGS=-DCMAKE_BUILD_TYPE=Debug ${CMAKE_FLAGS} -B build/debug
-CMAKE_RELEASE_FLAGS=-DCMAKE_BUILD_TYPE=Release ${CMAKE_FLAGS} -B build/release
+CMAKE_DEBUG_FLAGS=-DCMAKE_BUILD_TYPE=Debug ${CMAKE_FLAGS} -B build/debug --log-level=DEBUG
+CMAKE_RELEASE_FLAGS=-DCMAKE_BUILD_TYPE=Release ${CMAKE_FLAGS} -B build/release --log-level=TRACE
 
 all:
 	make configure_debug
@@ -23,14 +23,18 @@ configure_release:
 	cmake ${CMAKE_RELEASE_FLAGS}
 
 compile_debug:
-	ninja -C build/debug/
+	cmake --build build/debug/
 
 compile_release:
-	ninja -C build/release/
+	cmake --build build/release/
 
-compile_with_clang_tidy: src/* src/**/*
+
+
+configure_debug_clangtidy:
 	cmake ${CMAKE_CLANG_TIDY_FLAG} ${CMAKE_DEBUG_FLAGS} -B build/debug_clangtidy
-	ninja -C build/debug_clangtidy
+
+compile_debug_clangtidy:
+	cmake --build build/debug_clangtidy
 
 
 run:
