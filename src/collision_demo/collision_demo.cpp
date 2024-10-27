@@ -81,13 +81,14 @@ namespace engine_demos {
 
     scene make_collision_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
         gal::vertex_array cube_vao = gal::vertex_array::make<vertex_t>(vertex_data, std::span(indices.data(), indices.size()));
-        material cube_material = make_retro_3d_material(get_rm().get_texture("assets/example.png"));
+        material cube_material(get_rm().get_retro_3d_shader(), get_rm().get_texture("assets/example.png"));
+
         mesh cube_mesh(cube_material, get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
 
 
         rc<const stateless_script> stillcube_script = get_rm().new_from(stateless_script {
             .process = [](node& n, std::any&, application_channel_t& app_chan) {
-//                n.transform() = rotate(n.transform(), app_chan.from_app.delta * pi / 8, z_axis + y_axis / 2.f);
+                n.transform() = rotate(n.transform(), app_chan.from_app.delta * pi / 8, z_axis + y_axis / 2.f);
             },
         });
 

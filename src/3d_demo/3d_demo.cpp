@@ -79,7 +79,7 @@ namespace engine_demos {
                     },
                 });
                 gal::vertex_array cube_vao = gal::vertex_array::make<vertex_t>(vertex_data, std::span(indices.data(), indices.size()));
-                material cube_material = make_retro_3d_material(get_rm().get_texture("assets/example.png"));
+                material cube_material(get_rm().get_retro_3d_shader(), get_rm().get_texture("assets/example.png"));
                 mesh cube(cube_material, get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
 
                 for(int x = -1; x <= 1; x++) {
