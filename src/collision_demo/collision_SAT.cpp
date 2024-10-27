@@ -25,7 +25,7 @@ static bool project_and_update_min(const vec3& ax, const std::vector<vec3>& a_v,
     return false;
 }
 
-std::optional<vec3> check_collision(const collision_shape& a, mat4 a_trans, const collision_shape& b, mat4 b_trans) {
+collision_result check_collision(const collision_shape& a, mat4 a_trans, const collision_shape& b, mat4 b_trans) {
     std::unordered_set<vec3> dont_repeat;
 
     mat4 b_to_a_space_trans = inverse(a_trans) * b_trans;
@@ -34,43 +34,41 @@ std::optional<vec3> check_collision(const collision_shape& a, mat4 a_trans, cons
     vec3 min_col_dir;
 
     for(vec3 face_normal : a.face_normals) {
-        if(min_col == 0.f)
-            return vec3(0);
+        if(!project_and_update_min(face_normal, a.verts, b.verts, b_to_a_space_trans, dont_repeat, min_col, min_col_dir, a_trans))
+            return collision_result::null();
 
-        if(!project_and_update_min(face_normal, a.verts, b.verts, b_to_a_space_trans, dont_repeat, min_col, min_col_dir, a_trans)) {
-            return std::nullopt;
-        }
+        if(min_col == 0.f)
+            return collision_result(min_col_dir, min_col);
     }
 
     for(vec3 face_normal_b_space : b.face_normals) {
-        if(min_col == 0.f)
-            return vec3(0);
-
         vec3 face_normal = b_to_a_space_trans * vec4(face_normal_b_space, 0.0);
 
-        if(!project_and_update_min(face_normal, a.verts, b.verts, b_to_a_space_trans, dont_repeat, min_col, min_col_dir, a_trans)) {
-            return std::nullopt;
-        }
+        if(!project_and_update_min(face_normal, a.verts, b.verts, b_to_a_space_trans, dont_repeat, min_col, min_col_dir, a_trans))
+            return collision_result::null();
+
+        if(min_col == 0.f)
+            return collision_result(min_col_dir, min_col);
     }
 
 
     for(vec3 a_edge : a.edges) {
         for(vec3 b_edge_b_space : b.edges) {
             if(min_col == 0.f)
-                return vec3(0);
+                return collision_result(min_col_dir, min_col);
 
             vec3 b_edge = b_to_a_space_trans * vec4(b_edge_b_space, 0.0);
 
             vec3 axis = normalize_without_verse(glm::cross(vec3(a_edge), vec3(b_edge)));
-            if (glm::isnan(axis.x)) { continue; }
+            if (std::isnan(axis.x)) { continue; }
 
             if(!project_and_update_min(axis, a.verts, b.verts, b_to_a_space_trans, dont_repeat, min_col, min_col_dir, a_trans)) {
-                return std::nullopt;
+                return collision_result::null();
             }
         }
     }
 
-    return min_col_dir * min_col;
+    return collision_result(min_col_dir, min_col);
 }
 
 static std::optional<float> proj_on_axis_and_find_collision(const vec3& axis, const std::vector<vec3>& a_verts, const std::vector<vec3>& b_verts, mat4 b_to_a_space_trans) {

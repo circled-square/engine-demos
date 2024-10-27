@@ -9,6 +9,7 @@
 #include <sstream>
 #include <array>
 #include <optional>
+#include <slogga/asserts.hpp>
 
 struct collision_shape {
     std::vector<glm::vec3> verts;
@@ -16,10 +17,34 @@ struct collision_shape {
     std::vector<glm::vec3> edges;
 };
 
-std::optional<glm::vec3> check_collision(const collision_shape& a, glm::mat4 a_trans, const collision_shape& b, glm::mat4 b_trans);
+class collision_result {
+    glm::vec3 m_versor;
+    float m_depth;
+public:
+    collision_result() = delete;
+    collision_result(const collision_result&) = default;
+    collision_result(glm::vec3 versor, float depth) : m_versor(versor), m_depth(depth) {}
+    static collision_result null() { return collision_result(glm::vec3(0), std::numeric_limits<float>::quiet_NaN()); }
+
+    glm::vec3 get_versor() const { return m_versor; }
+    float get_depth() const { return m_depth; }
+
+    bool is_shallow() const {
+        EXPECTS(this->operator bool());
+        return m_depth == 0.f;
+    }
+
+    glm::vec3 get_min_move_vector() {
+        EXPECTS(this->operator bool());
+
+        return -m_depth * m_versor;
+    }
+
+    operator bool() const { return !std::isnan(m_depth); }
+};
+
+collision_result check_collision(const collision_shape& a, glm::mat4 a_trans, const collision_shape& b, glm::mat4 b_trans);
 collision_shape make_collision_shape_from_mesh(const auto& mesh_verts, const auto& mesh_indices);
-
-
 
 
 template<>
@@ -31,37 +56,7 @@ struct std::hash<glm::vec3> {
         return h1 ^ (h2 << 1) ^ (h3 << 2); // or use boost::hash_combine
     }
 };
-/*
-template<>
-struct std::hash<i8vec3> {
-    std::size_t operator()(const i8vec3& v) const noexcept {
-        std::size_t h1 = std::hash<int8_t>{}(v.x);
-        std::size_t h2 = std::hash<int8_t>{}(v.y);
-        std::size_t h3 = std::hash<int8_t>{}(v.z);
-        return h1 ^ (h2 << 1) ^ (h3 << 2); // or use boost::hash_combine
-    }
-};
 
-
-//we care not for the orientation of the normal/edge vectors, so we reverse all with y<0 (some with y=0) so vecs inverse to each other are not counted (since everything goes through a unordered_set)
-inline i8vec3 normalize_without_verse_i8(vec3 v) {
-    v = glm::normalize(v);
-    i8vec3 ret = glm::round(v * 127.f);
-    if(ret.y < 0 || (ret.y == 0 && ret.x < 0) || (ret.x == 0 && ret.y == 0 && ret.z < 0))
-        ret = -ret;
-    return ret;
-}
-inline i8vec3 apply_trans_i8(mat4 m, i8vec3 v) { return normalize_without_verse_i8(m * vec4(v, 0)); }
-inline vec3 conv_i8_to_f_normalized(i8vec3 v) { return vec3(v) / 127.f; }
-inline i8vec3 cross_i8(i8vec3 v, i8vec3 u) {
-    i16vec3 a=v, b=u;
-    return i8vec3(
-        a.y*b.z - a.z*b.y,
-        a.z*b.x - a.x*b.z,
-        a.x*b.y - a.y*b.x
-    );
-}
-*/
 
 //we care not for the orientation of the normal/edge vectors, so we reverse all with y<0 (some with y=0) so vecs inverse to each other are not counted (since everything goes through a unordered_set)
 inline glm::vec3 normalize_without_verse(glm::vec3 v) {

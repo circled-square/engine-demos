@@ -87,29 +87,12 @@ namespace engine_demos {
 
         rc<const stateless_script> stillcube_script = get_rm().new_from(stateless_script {
             .process = [](node& n, std::any&, application_channel_t& app_chan) {
-                n.transform() = rotate(n.transform(), app_chan.from_app.delta * pi / 8, z_axis + y_axis / 2.f);
+//                n.transform() = rotate(n.transform(), app_chan.from_app.delta * pi / 8, z_axis + y_axis / 2.f);
             },
         });
 
         rc<const stateless_script> othercube_script = get_rm().new_from(stateless_script{
-           .construct = [](){
-               /*
-               auto shape = make_collision_shape_from_mesh(vertex_data, indices);
-               slogga::stdout_log("edges: \n");
-               for(auto& v : shape.edges) {
-                   slogga::stdout_log("\t({}, {}, {})", v.x, v.y, v.z);
-               }
-               slogga::stdout_log("face normals: \n");
-               for(auto& v : shape.face_normals) {
-                   slogga::stdout_log("\t({}, {}, {})", v.x, v.y, v.z);
-               }
-               slogga::stdout_log("verts: \n");
-               for(auto& v : shape.verts) {
-                   slogga::stdout_log("\t({}, {}, {})", v.x, v.y, v.z);
-               }*/
-
-               return std::any(collider_state(make_collision_shape_from_mesh(vertex_data, indices)));
-           },
+            .construct = [](){ return std::any(collider_state(make_collision_shape_from_mesh(vertex_data, indices))); },
             .process = [](node& n, std::any& state, application_channel_t& app_chan) {
                 collider_state& s = *std::any_cast<collider_state>(&state);
 
@@ -147,15 +130,15 @@ namespace engine_demos {
                 const mat4& this_transform = compute_global_transform(n);
                 node& other_node = n.get_father().get_child("stillcube");
                 const mat4& other_transform = compute_global_transform(other_node);
-                auto collision = check_collision(this_shape, this_transform, other_shape, other_transform);
-                std::string collision_str = collision
-                    ? std::format("Yes: ({}, {}, {})", collision->x, collision->y, collision->z)
+                collision_result coll_result = check_collision(this_shape, this_transform, other_shape, other_transform);
+                std::string collision_str = coll_result
+                    ? std::format("Yes: ({}, {}, {}), {}", coll_result.get_versor().x, coll_result.get_versor().y, coll_result.get_versor().z, coll_result.get_depth())
                     : std::string("No");
 
                 ImGui::Text("Collision detected?: %s", collision_str.c_str());
 
-                if(collision)
-                    n.transform() = glm::translate(n.transform(), -*collision);
+                if(coll_result)
+                    n.transform() = glm::translate(n.transform(), coll_result.get_min_move_vector());
             }
         });
 
