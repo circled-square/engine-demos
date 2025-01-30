@@ -1,5 +1,4 @@
 #include "collision_demo.hpp"
-#include "collision_SAT.hpp"
 
 #include "../imgui_menu_node.hpp"
 #include <imgui.h>
@@ -64,17 +63,7 @@ namespace engine_demos {
         {7, 4, 0},
     };
 
-    static mat4 compute_global_transform(node& n) {
-        node* f = n.try_get_father();
-        if(f) {
-            return compute_global_transform(*f) * n.transform();
-        } else {
-            return n.transform();
-        }
-    }
-
-    struct collider_state  {
-        ::collision_shape shape;
+    struct kbdcube_state  {
         bool up = false, down = false, left = false, right = false, fwd = false, bwd = false;
         float move_speed = .5;
     };
@@ -92,10 +81,12 @@ namespace engine_demos {
             },
         });
 
-        rc<const stateless_script> othercube_script = get_rm().new_from(stateless_script{
-            .construct = [](){ return std::any(collider_state(make_collision_shape_from_mesh(vertex_data, indices))); },
+        rc<const stateless_script> kbdcube_script = get_rm().new_from(stateless_script{
+            .construct = [](){
+                return std::any(kbdcube_state());
+            },
             .process = [](node& n, std::any& state, application_channel_t& app_chan) {
-                collider_state& s = *std::any_cast<collider_state>(&state);
+                kbdcube_state& s = *std::any_cast<kbdcube_state>(&state);
 
                 // handle kbd input
                 for(const event_variant_t& event : app_chan.from_app.events) {
@@ -122,32 +113,38 @@ namespace engine_demos {
                     (int)s.bwd - (int)s.fwd,
                 } * s.move_speed * app_chan.from_app.delta;
                 n.transform() = glm::translate(n.transform(), move_vec);
-
-                //handle collisions
-                const ::collision_shape& this_shape = s.shape;
-                // there is currently no way for us to access this data from outside the stillcube node; fortunately, it is a cube just like us
-                const ::collision_shape& other_shape = this_shape;
-
-                const mat4& this_transform = compute_global_transform(n);
-                node& other_node = n.get_father().get_child("stillcube");
-                const mat4& other_transform = compute_global_transform(other_node);
-                collision_result coll_result = check_collision(this_shape, this_transform, other_shape, other_transform);
-                std::string collision_str = coll_result
-                    ? std::format("Yes: ({}, {}, {}), {}", coll_result.get_versor().x, coll_result.get_versor().y, coll_result.get_versor().z, coll_result.get_depth())
-                    : std::string("No");
-
-                ImGui::Text("Collision detected?: %s", collision_str.c_str());
-
-                if(coll_result)
-                    n.transform() = glm::translate(n.transform(), coll_result.get_min_move_vector());
             }
         });
 
+        collision_shape col_shape = collision_shape::from_mesh(
+            (void*)vertex_data.data(), vertex_data.size(), offsetof(vertex_t, pos), sizeof(vertex_t),
+            std::span<const glm::uvec3>(indices.begin(), indices.end()),
+            0, {0}
+        );
+
+
         node root("");
+
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
-        root.add_child(node("stillcube", cube_mesh, glm::mat4(1), std::move(stillcube_script)));
-        root.add_child(node("othercube", cube_mesh, glm::mat4(1), std::move(othercube_script)));
+
         root.add_child(node("camera", camera(), glm::inverse(glm::lookAt(vec3(3,6,6), vec3(0), vec3(0,1,0)))));
+
+        node stillcube("stillcube", cube_mesh, glm::mat4(1), std::move(stillcube_script));
+        stillcube.add_child(node("colshape", col_shape));
+        root.add_child(std::move(stillcube));
+
+
+        node kbdcube("kbdcube", cube_mesh, glm::mat4(1), std::move(kbdcube_script));
+        kbdcube.set_collision_behaviour(engine::collision_behaviour {
+            .moves_away_on_collision = true,
+        });
+        node kbd_colshape_node("colshape", std::move(col_shape));
+        kbd_colshape_node.set_collision_behaviour(engine::collision_behaviour {
+            .passes_events_to_father = true,
+        });
+        kbdcube.add_child(std::move(kbd_colshape_node));
+        root.add_child(std::move(kbdcube));
+
         return scene(scene_name, std::move(root));
     }
 } // namespace engine_demos
