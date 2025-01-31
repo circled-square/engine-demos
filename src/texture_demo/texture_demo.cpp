@@ -42,7 +42,7 @@ namespace engine_demos {
             out vec4 color; \
             uniform sampler2D u_texture_slot; \
             void main() { \
-                color = texture(u_texture_slot, v_tex_coord); \
+                color = texture(u_texture_slot, v_tex_coord).brga; \
             }";
 
         return gal::shader_program(vert, frag);
@@ -54,7 +54,7 @@ namespace engine_demos {
         gal::vertex_array vao = make_whole_screen_vao();
         gal::shader_program shader = make_shader();
         gal::texture tex = gal::texture(gal::image("assets/example.png"));
-        framebuffer_t fbo = framebuffer_t(gal::texture::empty({512, 512}));
+        framebuffer_t fbo = framebuffer_t(gal::texture::empty({512, 512}, 4));
 
         imgui_tex_script_state_t() = default;
         imgui_tex_script_state_t(imgui_tex_script_state_t&&) = default;
@@ -70,24 +70,25 @@ namespace engine_demos {
             .construct = []() { return std::any(imgui_tex_script_state_t()); },
             .process = [](node& n, std::any& ss, application_channel_t& c) {
                 imgui_tex_script_state_t& s = *std::any_cast<imgui_tex_script_state_t>(&ss);
-                ImGui::Begin("FboTextureWindow");
+                ImGui::Begin("Fbo Texture Window");
                 {
-                    const int texture_slot = 0;
-                    s.tex.bind(texture_slot);
-                    s.shader.set_uniform<int>("u_texture_slot", texture_slot);
-
-                    s.renderer.clear();
-
-                    glViewport(0,0,s.fbo.resolution().x, s.fbo.resolution().y);
                     s.fbo.bind();
-                    ASSERTS(s.fbo.resolution() == glm::ivec2(512,512));
-                    s.renderer.draw(s.vao, s.shader);
+                    {
+                        glViewport(0, 0, s.fbo.resolution().x, s.fbo.resolution().y);
+                        s.renderer.clear();
+
+                        ASSERTS(s.fbo.resolution() == glm::ivec2(512,512));
+                        ASSERTS(s.fbo.get_texture()->resolution() == glm::ivec2(512, 512));
+
+                        const int texture_slot = 0;
+                        s.tex.bind(texture_slot);
+                        s.shader.set_uniform<int>("u_texture_slot", texture_slot);
+                        s.renderer.draw(s.vao, s.shader);
+                    }
                     s.fbo.unbind();
 
                     // Using a Child allow to fill all the space of the window.
-                    // It also alows customization
                     ImGui::BeginChild("TextureRender1");
-                    // Get the size of the child (i.e. the whole draw size of the windows).
                     ImVec2 wsize = ImGui::GetWindowSize();
                     // Because I use the texture from OpenGL, I need to invert the V from the UV.
                     ImGui::Image((ImTextureID)s.fbo.get_texture()->get_gl_id(), wsize, ImVec2(0, 1), ImVec2(1, 0));
@@ -95,12 +96,10 @@ namespace engine_demos {
                 }
                 ImGui::End();
 
-                ImGui::Begin("TextureWindow");
+                ImGui::Begin("Texture Window");
                 {
                     // Using a Child allow to fill all the space of the window.
-                    // It also alows customization
                     ImGui::BeginChild("TextureRender2");
-                    // Get the size of the child (i.e. the whole draw size of the windows).
                     ImVec2 wsize = ImGui::GetWindowSize();
                     // Because I use the texture from OpenGL, I need to invert the V from the UV.
                     ImGui::Image((ImTextureID)s.tex.get_gl_id(), wsize, ImVec2(0, 1), ImVec2(1, 0));

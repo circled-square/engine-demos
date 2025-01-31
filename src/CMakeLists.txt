@@ -17,8 +17,11 @@ target_link_libraries(postfx_demo PRIVATE engine imgui_menu_node)
 add_library(freecam_demo STATIC freecam_demo/freecam_demo.cpp)
 target_link_libraries(freecam_demo PRIVATE engine imgui_menu_node)
 
+add_library(collision_demo STATIC collision_demo/collision_demo.cpp)
+target_link_libraries(collision_demo PRIVATE engine imgui_menu_node)
+
 add_library(demos INTERFACE)
-target_link_libraries(demos INTERFACE texture_demo 3d_demo gltf_demo postfx_demo freecam_demo)
+target_link_libraries(demos INTERFACE texture_demo 3d_demo gltf_demo postfx_demo freecam_demo collision_demo)
 
 add_executable(main main.cpp)
 target_link_libraries(main PRIVATE engine demos)

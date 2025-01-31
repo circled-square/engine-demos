@@ -6,6 +6,7 @@
 #include "gltf_demo/gltf_demo.hpp"
 #include "postfx_demo/postfx_demo.hpp"
 #include "freecam_demo/freecam_demo.hpp"
+#include "collision_demo/collision_demo.hpp"
 
 
 static engine::rc<engine::scene> get_start_scene();
@@ -25,7 +26,8 @@ static engine::rc<engine::scene> get_start_scene() {
         { "3d demo", engine_demos::make_3d_demo },
         { "gltf demo", engine_demos::make_gltf_demo },
         { "postfx demo", engine_demos::make_postfx_demo },
-        { "freecam demo", engine_demos::make_freecam_demo }
+        { "freecam demo", engine_demos::make_freecam_demo },
+        { "collision demo", engine_demos::make_collision_demo }
     };
 
     for (auto& [name, ctor] : constructors) {
@@ -33,5 +35,5 @@ static engine::rc<engine::scene> get_start_scene() {
         engine::get_rm().dbg_add_scene_constructor(name, [=](){ return ctor(names, name); });
     }
 
-    return engine::get_rm().get_scene("freecam demo");
+    return engine::get_rm().get_scene("collision demo");
 }
