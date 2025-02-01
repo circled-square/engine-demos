@@ -1,7 +1,7 @@
 #ifndef _3D_DEMO_HPP
 #define _3D_DEMO_HPP
 
-#include <engine/scene/scene.hpp>
+#include <engine/scene.hpp>
 #include <memory>
 #include <forward_list>
 

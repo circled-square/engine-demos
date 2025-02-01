@@ -1,7 +1,7 @@
 #ifndef GLTF_DEMO_HPP
 #define GLTF_DEMO_HPP
 
-#include <engine/scene/scene.hpp>
+#include <engine/scene.hpp>
 #include <memory>
 #include <forward_list>
 

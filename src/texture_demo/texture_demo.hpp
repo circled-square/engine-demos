@@ -1,7 +1,7 @@
 #ifndef GAL_TEXTURE_DEMO_HPP
 #define GAL_TEXTURE_DEMO_HPP
 
-#include <engine/scene/scene.hpp>
+#include <engine/scene.hpp>
 #include <memory>
 #include <forward_list>
 

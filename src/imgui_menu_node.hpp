@@ -1,7 +1,7 @@
 #ifndef ENGINE_DEMOS_IMGUI_MENU_NODE_HPP
 #define ENGINE_DEMOS_IMGUI_MENU_NODE_HPP
 
-#include <engine/scene/scene.hpp>
+#include <engine/scene.hpp>
 #include <GAL/renderer/renderer.hpp>
 
 #include <memory>

@@ -3,7 +3,7 @@
 #include "../imgui_menu_node.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <engine/resources_manager.hpp>
-#include <engine/window/window.hpp>
+#include <engine/application/window.hpp>
 
 
 namespace engine_demos {

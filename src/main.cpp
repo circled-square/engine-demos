@@ -22,11 +22,11 @@ static engine::rc<engine::scene> get_start_scene() {
     using scene_ctor_t = engine::scene(*)(std::shared_ptr<std::forward_list<const char*>>, const char*);
 
     std::pair<const char*, scene_ctor_t> constructors[] = {
-        { "texture demo", engine_demos::make_texture_demo },
-        { "3d demo", engine_demos::make_3d_demo },
-        { "gltf demo", engine_demos::make_gltf_demo },
-        { "postfx demo", engine_demos::make_postfx_demo },
-        { "freecam demo", engine_demos::make_freecam_demo },
+        { "texture demo",   engine_demos::make_texture_demo },
+        { "3d demo",        engine_demos::make_3d_demo },
+        { "gltf demo",      engine_demos::make_gltf_demo },
+        { "postfx demo",    engine_demos::make_postfx_demo },
+        { "freecam demo",   engine_demos::make_freecam_demo },
         { "collision demo", engine_demos::make_collision_demo }
     };
 

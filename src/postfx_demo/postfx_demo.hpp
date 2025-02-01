@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <forward_list>
-#include <engine/scene/scene.hpp>
+#include <engine/scene.hpp>
 
 namespace engine_demos {
     engine::scene make_postfx_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name);

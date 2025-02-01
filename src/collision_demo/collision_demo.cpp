@@ -5,8 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <array>
 #include <engine/resources_manager.hpp>
-#include <engine/materials.hpp>
-#include <engine/window/window.hpp>
+#include <engine/scene/renderer/mesh/material/materials.hpp>
+#include <engine/application/window.hpp>
 
 namespace engine_demos {
     using namespace glm;

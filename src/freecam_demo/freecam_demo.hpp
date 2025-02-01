@@ -1,7 +1,7 @@
 #ifndef FREECAM_DEMO_HPP
 #define FREECAM_DEMO_HPP
 
-#include <engine/scene/scene.hpp>
+#include <engine/scene.hpp>
 #include <memory>
 #include <forward_list>
 
