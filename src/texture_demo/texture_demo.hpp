@@ -1,5 +1,5 @@
-#ifndef GAL_TEXTURE_DEMO_HPP
-#define GAL_TEXTURE_DEMO_HPP
+#ifndef TEXTURE_DEMO_HPP
+#define TEXTURE_DEMO_HPP
 
 #include <engine/scene.hpp>
 #include <memory>
@@ -9,4 +9,4 @@ namespace engine_demos {
     engine::scene make_texture_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name);
 }
 
-#endif //GAL_TEST_TEXTURE_HPP
+#endif //TEXTURE_DEMO_HPP

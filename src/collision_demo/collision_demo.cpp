@@ -116,11 +116,11 @@ namespace engine_demos {
             }
         });
 
-        collision_shape col_shape = collision_shape::from_mesh(
+        rc<const collision_shape> col_shape = get_rm().new_from(collision_shape::from_mesh(
             (void*)vertex_data.data(), vertex_data.size(), offsetof(vertex_t, pos), sizeof(vertex_t),
             std::span<const glm::uvec3>(indices.begin(), indices.end()),
-            0, {0}
-        );
+            collision_layer(1) | collision_layer(2), collision_layer(1)
+        ));
 
 
         node root("");
