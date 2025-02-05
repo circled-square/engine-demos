@@ -105,6 +105,6 @@ namespace engine_demos {
         transparent_viewport.add_child(std::move(halftone_viewport));
         root.add_child(std::move(transparent_viewport));
 
-        return engine::scene(scene_name, std::move(root), std::move(to_app));
+        return engine::scene(scene_name, std::move(root), render_flags{}, std::move(to_app));
     }
 } // namespace engine_demos

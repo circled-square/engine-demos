@@ -107,7 +107,7 @@ namespace engine_demos {
                             }
                     }, [](const auto&) {});
                 }
-                vec3 move_vec = vec3{
+                vec3 move_vec = vec3 {
                     (int)s.right - (int)s.left,
                     (int)s.up - (int)s.down,
                     (int)s.bwd - (int)s.fwd,

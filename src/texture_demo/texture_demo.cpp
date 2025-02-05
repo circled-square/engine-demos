@@ -54,7 +54,7 @@ namespace engine_demos {
         gal::vertex_array vao = make_whole_screen_vao();
         gal::shader_program shader = make_shader();
         gal::texture tex = gal::texture(gal::image("assets/example.png"));
-        framebuffer_t fbo = framebuffer_t(gal::texture::empty({512, 512}, 4));
+        framebuffer_t fbo = framebuffer_t(gal::texture::empty({64, 64}, 4));
 
         imgui_tex_script_state_t() = default;
         imgui_tex_script_state_t(imgui_tex_script_state_t&&) = default;
@@ -77,9 +77,6 @@ namespace engine_demos {
                         glViewport(0, 0, s.fbo.resolution().x, s.fbo.resolution().y);
                         s.renderer.clear();
 
-                        ASSERTS(s.fbo.resolution() == glm::ivec2(512,512));
-                        ASSERTS(s.fbo.get_texture()->resolution() == glm::ivec2(512, 512));
-
                         const int texture_slot = 0;
                         s.tex.bind(texture_slot);
                         s.shader.set_uniform<int>("u_texture_slot", texture_slot);
@@ -87,7 +84,7 @@ namespace engine_demos {
                     }
                     s.fbo.unbind();
 
-                    // Using a Child allow to fill all the space of the window.
+                    // Using a Child allows to fill all the space of the window.
                     ImGui::BeginChild("TextureRender1");
                     ImVec2 wsize = ImGui::GetWindowSize();
                     // Because I use the texture from OpenGL, I need to invert the V from the UV.
@@ -98,7 +95,7 @@ namespace engine_demos {
 
                 ImGui::Begin("Texture Window");
                 {
-                    // Using a Child allow to fill all the space of the window.
+                    // Using a Child allows to fill all the space of the window.
                     ImGui::BeginChild("TextureRender2");
                     ImVec2 wsize = ImGui::GetWindowSize();
                     // Because I use the texture from OpenGL, I need to invert the V from the UV.

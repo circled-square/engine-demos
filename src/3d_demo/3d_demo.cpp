@@ -110,6 +110,6 @@ namespace engine_demos {
 
         root.add_child(node("camera", camera(), glm::translate(glm::mat4(1), glm::vec3(0,0,4)), script(std::move(cam_script))));
 
-        return scene(scene_name, std::move(root));
+        return scene(scene_name, std::move(root), engine::render_flags { .face_culling = engine::face_culling_t::front });
     }
 } // namespace engine_demos
