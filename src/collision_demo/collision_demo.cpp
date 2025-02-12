@@ -65,7 +65,7 @@ namespace engine_demos {
 
     struct kbdcube_state  {
         bool up = false, down = false, left = false, right = false, fwd = false, bwd = false;
-        float move_speed = .5;
+        float move_speed = 1.;
     };
 
     scene make_collision_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
@@ -76,17 +76,20 @@ namespace engine_demos {
 
 
         rc<const stateless_script> stillcube_script = get_rm().new_from(stateless_script {
-            .process = [](node& n, std::any&, application_channel_t& app_chan) {
-                n.transform() = rotate(n.transform(), app_chan.from_app.delta * pi / 8, z_axis + y_axis / 2.f);
+            .process = [](const noderef& n, std::any&, application_channel_t& app_chan) {
+                n->set_transform(rotate(n->transform(), app_chan.from_app.delta * pi / 8, z_axis + y_axis / 2.f));
             },
         });
 
         rc<const stateless_script> kbdcube_script = get_rm().new_from(stateless_script{
-            .construct = [](){
+            .construct = [](const noderef&) {
                 return std::any(kbdcube_state());
             },
-            .process = [](node& n, std::any& state, application_channel_t& app_chan) {
+            .process = [](const noderef& n, std::any& state, application_channel_t& app_chan) {
+                EXPECTS(state.type() == typeid(kbdcube_state));
+
                 kbdcube_state& s = *std::any_cast<kbdcube_state>(&state);
+                EXPECTS(&s);
 
                 // handle kbd input
                 for(const event_variant_t& event : app_chan.from_app.events) {
@@ -112,7 +115,7 @@ namespace engine_demos {
                     (int)s.up - (int)s.down,
                     (int)s.bwd - (int)s.fwd,
                 } * s.move_speed * app_chan.from_app.delta;
-                n.transform() = glm::translate(n.transform(), move_vec);
+                n->set_transform(glm::translate(n->transform(), move_vec));
             }
         });
 
@@ -123,23 +126,23 @@ namespace engine_demos {
         ));
 
 
-        node root("");
+        noderef root("");
 
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
-        root.add_child(node("camera", camera(), glm::inverse(glm::lookAt(vec3(3,6,6), vec3(0), vec3(0,1,0)))));
+        root.add_child(noderef("camera", camera(), glm::inverse(glm::lookAt(vec3(3,6,6), vec3(0), vec3(0,1,0)))));
 
-        node stillcube("stillcube", cube_mesh, glm::mat4(1), std::move(stillcube_script));
-        stillcube.add_child(node("colshape", col_shape));
+        noderef stillcube("stillcube", cube_mesh, glm::mat4(1), std::move(stillcube_script));
+        stillcube.add_child(noderef("colshape", col_shape));
         root.add_child(std::move(stillcube));
 
 
-        node kbdcube("kbdcube", cube_mesh, glm::mat4(1), std::move(kbdcube_script));
-        kbdcube.set_collision_behaviour(engine::collision_behaviour {
+        noderef kbdcube("kbdcube", cube_mesh, glm::mat4(1), std::move(kbdcube_script));
+        kbdcube->set_collision_behaviour(engine::collision_behaviour {
             .moves_away_on_collision = true,
         });
-        node kbd_colshape_node("colshape", std::move(col_shape));
-        kbd_colshape_node.set_collision_behaviour(engine::collision_behaviour {
+        noderef kbd_colshape_node("colshape", std::move(col_shape));
+        kbd_colshape_node->set_collision_behaviour(engine::collision_behaviour {
             .passes_events_to_father = true,
         });
         kbdcube.add_child(std::move(kbd_colshape_node));

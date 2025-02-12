@@ -10,11 +10,13 @@ namespace engine_demos {
     using namespace glm;
     using namespace engine;
 
-    static glm::mat4 to_rotation_mat(glm::mat4 mat) {
+    static glm::mat4 to_rotation_mat(const glm::mat4& m) {
+        glm::mat4 mat = m;
         mat[3] = vec4(0);
         return mat;
     }
-    static glm::mat4 clear_first_3_rows(glm::mat4 mat) {
+    static glm::mat4 clear_first_3_rows(const glm::mat4& m) {
+        glm::mat4 mat = m;
         mat[0] = mat[1] = mat[2] = vec4(0);
         return mat;
     }
@@ -27,23 +29,23 @@ namespace engine_demos {
 
     scene make_freecam_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
         application_channel_t::to_app_t to_app { .wants_mouse_cursor_captured = true };
-        node root("");
+        noderef root("");
 
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
-        node halftone_viewport("halftone_vp", engine::viewport(
+        noderef halftone_viewport("halftone_vp", engine::viewport(
             get_rm().new_from<shader>(shader::from_file("assets/shaders/halftone_postfx.glsl")),
             glm::vec2(1./2.)
         ));
 
-        node transparent_viewport("transparent_vp", engine::viewport(
+        noderef transparent_viewport("transparent_vp", engine::viewport(
             get_rm().new_from<shader>(shader::from_file("assets/shaders/transparent_postfx.glsl")),
             glm::vec2(1./3.)
         ));
 
         rc<const stateless_script> freecam_script = get_rm().new_from(stateless_script {
-            .construct = []() { return std::any(freecam_state()); },
-            .process = [](node& n, std::any& ss, application_channel_t& app_chan) {
+            .construct = [](const noderef&){ return std::any(freecam_state()); },
+            .process = [](const noderef& n, std::any& ss, application_channel_t& app_chan) {
                 freecam_state& s = *std::any_cast<freecam_state>(&ss);
 
                 for(const event_variant_t& event : app_chan.from_app.events) {
@@ -78,10 +80,11 @@ namespace engine_demos {
                         s.current_y_rotation = std::clamp(s.current_y_rotation, -glm::pi<float>()/2.f * 0.99f, glm::pi<float>()/2.f * 0.99f);
                         movement.y = s.current_y_rotation - old_rotation;
 
-                        auto& cam= n.transform();
+                        glm::mat4 cam = n->transform();
 
                         cam = glm::rotate(glm::mat4(1), -movement.x, glm::vec3(0,1,0)) * to_rotation_mat(cam) + clear_first_3_rows(cam);
                         cam = glm::rotate(cam, -movement.y, glm::vec3(1,0,0));
+                        n->set_transform(cam);
                     });
                     match_variant(event, [](auto){});
                 }
@@ -93,18 +96,19 @@ namespace engine_demos {
                 );
                 movement *= s.move_speed * app_chan.from_app.delta * (s.go_faster ? 3.0 : 1.0);
 
-                n.transform() = glm::translate(n.transform(), movement);
+                n->set_transform(glm::translate(n->transform(), movement));
             },
         });
 
 
-        node camera_node("camera", engine::camera(), glm::translate(glm::mat4(1), glm::vec3(0, 2, 0)), script(std::move(freecam_script)));
+        noderef camera_node("camera", engine::camera(),
+            glm::translate(glm::mat4(1), glm::vec3(0, 2, 0)), std::move(freecam_script));
 
         halftone_viewport.add_child(std::move(camera_node));
-        halftone_viewport.add_child(node(get_rm().get_nodetree_from_gltf("assets/castlebl.glb")));
+        halftone_viewport.add_child(noderef(get_rm().get_nodetree_from_gltf("assets/castlebl.glb")));
         transparent_viewport.add_child(std::move(halftone_viewport));
         root.add_child(std::move(transparent_viewport));
 
-        return engine::scene(scene_name, std::move(root), render_flags{}, std::move(to_app));
+        return engine::scene(scene_name, std::move(root), render_flags_t{}, std::move(to_app));
     }
 } // namespace engine_demos

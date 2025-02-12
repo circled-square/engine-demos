@@ -24,9 +24,9 @@ namespace engine_demos {
         virtual ~menu_state_t() = default;
     };
 
-    node make_imgui_menu_node(std::shared_ptr<std::forward_list<const char*>> scene_names, std::string scene_name) {
+    noderef make_imgui_menu_node(std::shared_ptr<std::forward_list<const char*>> scene_names, std::string scene_name) {
         rc<const stateless_script> imgui_menu_script = get_rm().new_from(stateless_script {
-            .process = [](node& n, std::any& ss, application_channel_t& c) {
+            .process = [](const noderef& n, std::any& ss, application_channel_t& c) {
                 menu_state_t& s = *std::any_cast<menu_state_t>(&ss);
 
                 if(ImGui::Begin("Scene Menu", NULL, ImGuiWindowFlags_NoFocusOnAppearing)) {
@@ -100,8 +100,8 @@ namespace engine_demos {
 
         std::any menu_state = std::make_any<menu_state_t>(std::move(scene_names), std::move(scene_name));
 
-        script stateful_script(std::move(imgui_menu_script), std::move(menu_state));
-        return node("menu-node", null_node_data(), glm::mat4(1), std::move(stateful_script));
-
+        noderef ret("menu-node", null_node_data(), glm::mat4(1), std::move(imgui_menu_script));
+        ret->set_script_state(std::move(menu_state));
+        return ret;
     }
 } // namespace engine_demos

@@ -14,17 +14,22 @@ namespace engine_demos {
     constexpr float pi = glm::pi<f32>();
 
     scene make_gltf_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
-        node root("");
+        noderef root("");
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
         rc<const stateless_script> rotate_script = get_rm().new_from(stateless_script {
-            .process = [](node& n, std::any&, application_channel_t& c) {
-                n.transform() = rotate(n.transform(), c.from_app.delta * pi / 16, y_axis);
+            .process = [](const noderef& n, std::any&, application_channel_t& c) {
+                n->set_transform(rotate(n->transform(), c.from_app.delta * pi / 16, y_axis));
             },
         });
-        root.add_child(engine::node(engine::get_rm().get_nodetree_from_gltf("assets/castlebl.glb"), "castle"));
-        root.get_child("castle").attach_script(std::move(rotate_script));
-        root.add_child(engine::node("camera", engine::camera(), glm::translate(glm::mat4(1), vec3(0,50,250))));
+
+        noderef castle(get_rm().get_nodetree_from_gltf("assets/castlebl.glb"), "castle");
+
+        castle.attach_script(std::move(rotate_script));
+
+        root.add_child(std::move(castle));
+
+        root.add_child(noderef("camera", engine::camera(), glm::translate(glm::mat4(1), vec3(0,50,250))));
 
         return scene(scene_name, std::move(root));
     }

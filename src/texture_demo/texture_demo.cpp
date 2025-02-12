@@ -62,13 +62,13 @@ namespace engine_demos {
     };
 
     engine::scene make_texture_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
-        node root("");
+        noderef root("");
 
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
         rc<const stateless_script> imgui_tex_script = get_rm().new_from(stateless_script {
-            .construct = []() { return std::any(imgui_tex_script_state_t()); },
-            .process = [](node& n, std::any& ss, application_channel_t& c) {
+            .construct = [](const noderef&) { return std::any(imgui_tex_script_state_t()); },
+            .process = [](const noderef& n, std::any& ss, application_channel_t& c) {
                 imgui_tex_script_state_t& s = *std::any_cast<imgui_tex_script_state_t>(&ss);
                 ImGui::Begin("Fbo Texture Window");
                 {
@@ -107,7 +107,7 @@ namespace engine_demos {
         });
 
 
-        root.add_child(node("imgui-tex-node", null_node_data(), glm::mat4(1), std::move(imgui_tex_script)));
+        root.add_child(noderef("imgui-tex-node", null_node_data(), glm::mat4(1), std::move(imgui_tex_script)));
 
         return scene(scene_name, std::move(root));
     }
