@@ -65,7 +65,7 @@ namespace engine_demos {
         float time = 0.f;
     };
 
-    scene make_3d_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
+    scene make_3d_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
         noderef root("");
 
         constexpr int cube_amount_constant = 5; // n_of_cubes = (cube_amount_constant * 2 + 1) ^ 3
@@ -80,7 +80,7 @@ namespace engine_demos {
             .construct = [](const noderef& n) {
                 rc<const stateless_script> centre_cube_script = get_rm().new_from(stateless_script {
                     .process = [](const noderef& n, std::any&, application_channel_t& app_chan) {
-                        n->set_transform(rotate(n->transform(), app_chan.from_app.delta * pi / 8, z_axis + y_axis / 2.f));
+                        n->set_transform(rotate(n->transform(), app_chan.from_app().delta * pi / 8, z_axis + y_axis / 2.f));
                     },
                 });
                 gal::vertex_array cube_vao = gal::vertex_array::make<vertex_t>(vertex_data, std::span(indices.data(), indices.size()));
@@ -123,7 +123,7 @@ namespace engine_demos {
             .construct = [](const noderef&) { return std::any(camera_script_state()); },
             .process = [](const noderef& n, std::any& ss, application_channel_t& app_chan) {
                 camera_script_state& s = *std::any_cast<camera_script_state>(&ss);
-                s.time += app_chan.from_app.delta;
+                s.time += app_chan.from_app().delta;
 
                 float distance = cube_amount_constant * camera_relative_distance;
                 vec3 pos = distance * vec3{ sin(s.time), sin(s.time), cos(s.time) };
@@ -133,6 +133,6 @@ namespace engine_demos {
         });
         root.add_child(noderef("camera", camera(), glm::translate(glm::mat4(1), glm::vec3(0,0,4)), std::move(cam_script)));
 
-        return scene(scene_name, std::move(root), engine::render_flags_t { .face_culling = engine::face_culling_t::back });
+        return scene(std::move(scene_name), std::move(root), engine::render_flags_t { .face_culling = engine::face_culling_t::back });
     }
 } // namespace engine_demos

@@ -9,7 +9,7 @@ namespace engine_demos {
     using namespace engine;
 
     struct menu_state_t {
-        std::shared_ptr<std::forward_list<const char*>> scene_names;
+        std::shared_ptr<std::forward_list<std::string>> scene_names;
 
         std::queue<float> delta_time_hist;
         std::multiset<float, std::greater<float>> sorted_delta_times;
@@ -20,11 +20,11 @@ namespace engine_demos {
 
         std::string scene_name;
 
-        menu_state_t(std::shared_ptr<std::forward_list<const char*>> scene_names, std::string scene_name): scene_names(std::move(scene_names)), scene_name(std::move(scene_name)) {}
+        menu_state_t(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name): scene_names(std::move(scene_names)), scene_name(std::move(scene_name)) {}
         virtual ~menu_state_t() = default;
     };
 
-    noderef make_imgui_menu_node(std::shared_ptr<std::forward_list<const char*>> scene_names, std::string scene_name) {
+    noderef make_imgui_menu_node(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
         rc<const stateless_script> imgui_menu_script = get_rm().new_from(stateless_script {
             .process = [](const noderef& n, std::any& ss, application_channel_t& c) {
                 menu_state_t& s = *std::any_cast<menu_state_t>(&ss);
@@ -32,15 +32,15 @@ namespace engine_demos {
                 if(ImGui::Begin("Scene Menu", NULL, ImGuiWindowFlags_NoFocusOnAppearing)) {
                     ImGui::Text("Active Demo: %s", s.scene_name.c_str());
 
-                    for(const char* name : *s.scene_names) {
-                        if(ImGui::Button(name)) {
-                            c.to_app.scene_to_change_to = get_rm().get_scene(name);
+                    for(const std::string& name : *s.scene_names) {
+                        if(ImGui::Button(name.c_str())) {
+                            c.to_app().scene_to_change_to = get_rm().get_scene(name);
                         }
                     }
 
                     //TODO: use ImPlot to plot framerate
 
-                    float delta = c.from_app.delta;
+                    float delta = c.from_app().delta;
                     s.delta_time_hist.push(delta);
                     s.sorted_delta_times.insert(delta);
                     s.delta_time_total += delta;
@@ -98,7 +98,7 @@ namespace engine_demos {
             }
         });
 
-        std::any menu_state = std::make_any<menu_state_t>(std::move(scene_names), std::move(scene_name));
+        std::any menu_state = menu_state_t(std::move(scene_names), std::move(scene_name));
 
         noderef ret("menu-node", null_node_data(), glm::mat4(1), std::move(imgui_menu_script));
         ret->set_script_state(std::move(menu_state));

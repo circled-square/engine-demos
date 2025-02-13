@@ -30,14 +30,14 @@ namespace engine_demos {
 
     static gal::shader_program make_shader() {
         std::vector<gal::shader_program> ret;
-        const char* vert = "#version 440 core \n \
+        std::string vert = "#version 440 core \n \
             layout(location = 0) in vec2 pos; \
             out vec2 v_tex_coord;\
             void main() { \
                 gl_Position = vec4(pos, 0, 1); \
                 v_tex_coord = pos/2+.5; \
             }";
-        const char* frag = "#version 330 core \n \
+        std::string frag = "#version 330 core \n \
             in vec2 v_tex_coord;\
             out vec4 color; \
             uniform sampler2D u_texture_slot; \
@@ -61,7 +61,7 @@ namespace engine_demos {
         imgui_tex_script_state_t(const imgui_tex_script_state_t&) {} // copy ctor simply calls default ctor; only makes sense because the attributes never change
     };
 
-    engine::scene make_texture_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
+    engine::scene make_texture_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
         noderef root("");
 
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));

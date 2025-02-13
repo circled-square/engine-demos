@@ -27,7 +27,7 @@ namespace engine_demos {
         float move_speed = 30.0;
     };
 
-    scene make_freecam_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
+    scene make_freecam_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
         application_channel_t::to_app_t to_app { .wants_mouse_cursor_captured = true };
         noderef root("");
 
@@ -48,7 +48,7 @@ namespace engine_demos {
             .process = [](const noderef& n, std::any& ss, application_channel_t& app_chan) {
                 freecam_state& s = *std::any_cast<freecam_state>(&ss);
 
-                for(const event_variant_t& event : app_chan.from_app.events) {
+                for(const event_variant_t& event : app_chan.from_app().events) {
                     match_variant(event,
                     [&s, &app_chan](const key_event_t& e) {
                             using namespace engine::window;
@@ -68,7 +68,7 @@ namespace engine_demos {
                                 s.go_faster = e.action != key_action_codes::RELEASE;
                             } else if (e.key == key_codes::C && e.action == key_action_codes::RELEASE) {
                                 //toggle mouse capture
-                                app_chan.to_app.wants_mouse_cursor_captured = !app_chan.from_app.mouse_cursor_is_captured;
+                                app_chan.to_app().wants_mouse_cursor_captured = !app_chan.from_app().mouse_cursor_is_captured;
                             }
                     }, [&s, &n](const mouse_move_event_t& e) {
                         glm::vec2 movement = e.movement;
@@ -94,7 +94,7 @@ namespace engine_demos {
                     (s.up?1:0) - (s.down?1:0),
                     (s.bwd?1:0) - (s.fwd?1:0)
                 );
-                movement *= s.move_speed * app_chan.from_app.delta * (s.go_faster ? 3.0 : 1.0);
+                movement *= s.move_speed * app_chan.from_app().delta * (s.go_faster ? 3.0 : 1.0);
 
                 n->set_transform(glm::translate(n->transform(), movement));
             },

@@ -13,13 +13,13 @@ namespace engine_demos {
     [[maybe_unused]]
     constexpr float pi = glm::pi<f32>();
 
-    scene make_gltf_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
+    scene make_gltf_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
         noderef root("");
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
         rc<const stateless_script> rotate_script = get_rm().new_from(stateless_script {
             .process = [](const noderef& n, std::any&, application_channel_t& c) {
-                n->set_transform(rotate(n->transform(), c.from_app.delta * pi / 16, y_axis));
+                n->set_transform(rotate(n->transform(), c.from_app().delta * pi / 16, y_axis));
             },
         });
 

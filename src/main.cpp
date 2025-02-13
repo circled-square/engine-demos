@@ -17,11 +17,11 @@ int main() {
 
 static engine::rc<engine::scene> get_start_scene() {
     //all scenes need to know the names of all other scenes for imgui_menu_node to work correctly
-    auto names = std::make_shared<std::forward_list<const char*>>();
+    auto names = std::make_shared<std::forward_list<std::string>>();
 
-    using scene_ctor_t = engine::scene(*)(std::shared_ptr<std::forward_list<const char*>>, const char*);
+    using scene_ctor_t = engine::scene(*)(std::shared_ptr<std::forward_list<std::string>>, std::string);
 
-    std::pair<const char*, scene_ctor_t> constructors[] = {
+    std::pair<std::string, scene_ctor_t> constructors[] = {
         { "texture demo",   engine_demos::make_texture_demo },
         { "3d demo",        engine_demos::make_3d_demo },
         { "gltf demo",      engine_demos::make_gltf_demo },
@@ -35,5 +35,5 @@ static engine::rc<engine::scene> get_start_scene() {
         engine::get_rm().dbg_add_scene_constructor(name, [=](){ return ctor(names, name); });
     }
 
-    return engine::get_rm().get_scene("postfx demo");
+    return engine::get_rm().get_scene("collision demo");
 }

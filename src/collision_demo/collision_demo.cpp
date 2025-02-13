@@ -68,7 +68,7 @@ namespace engine_demos {
         float move_speed = 1.;
     };
 
-    scene make_collision_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name) {
+    scene make_collision_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
         gal::vertex_array cube_vao = gal::vertex_array::make<vertex_t>(vertex_data, std::span(indices.data(), indices.size()));
         material cube_material(get_rm().get_retro_3d_shader(), get_rm().get_texture("assets/example.png"));
 
@@ -77,7 +77,7 @@ namespace engine_demos {
 
         rc<const stateless_script> stillcube_script = get_rm().new_from(stateless_script {
             .process = [](const noderef& n, std::any&, application_channel_t& app_chan) {
-                n->set_transform(rotate(n->transform(), app_chan.from_app.delta * pi / 8, z_axis + y_axis / 2.f));
+                n->set_transform(rotate(n->transform(), app_chan.from_app().delta * pi / 8, z_axis + y_axis / 2.f));
             },
         });
 
@@ -87,12 +87,10 @@ namespace engine_demos {
             },
             .process = [](const noderef& n, std::any& state, application_channel_t& app_chan) {
                 EXPECTS(state.type() == typeid(kbdcube_state));
-
                 kbdcube_state& s = *std::any_cast<kbdcube_state>(&state);
-                EXPECTS(&s);
 
                 // handle kbd input
-                for(const event_variant_t& event : app_chan.from_app.events) {
+                for(const event_variant_t& event : app_chan.from_app().events) {
                     match_variant(event, [&s, &app_chan](const key_event_t& e) {
                             using namespace engine::window;
                             if (e.key == key_codes::SPACE) {
@@ -114,13 +112,13 @@ namespace engine_demos {
                     (int)s.right - (int)s.left,
                     (int)s.up - (int)s.down,
                     (int)s.bwd - (int)s.fwd,
-                } * s.move_speed * app_chan.from_app.delta;
+                } * s.move_speed * app_chan.from_app().delta;
                 n->set_transform(glm::translate(n->transform(), move_vec));
             }
         });
 
         rc<const collision_shape> col_shape = get_rm().new_from(collision_shape::from_mesh(
-            (void*)vertex_data.data(), vertex_data.size(), offsetof(vertex_t, pos), sizeof(vertex_t),
+            stride_span<const glm::vec3>(vertex_data.data(), offsetof(vertex_t, pos), sizeof(vertex_t), vertex_data.size()),
             std::span<const glm::uvec3>(indices.begin(), indices.end()),
             collision_layer(1) | collision_layer(2), collision_layer(1)
         ));
@@ -131,6 +129,10 @@ namespace engine_demos {
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
         root.add_child(noderef("camera", camera(), glm::inverse(glm::lookAt(vec3(3,6,6), vec3(0), vec3(0,1,0)))));
+
+        noderef cone(get_rm().get_nodetree_from_gltf("assets/cone_with_collision.glb"), "cone");
+        cone->set_transform(glm::translate(cone->transform(), glm::vec3(2, 0, 0)));
+        root.add_child(std::move(cone));
 
         noderef stillcube("stillcube", cube_mesh, glm::mat4(1), std::move(stillcube_script));
         stillcube.add_child(noderef("colshape", col_shape));

@@ -6,7 +6,7 @@
 #include <forward_list>
 
 namespace engine_demos {
-    engine::scene make_freecam_demo(std::shared_ptr<std::forward_list<const char*>> scene_names, const char* scene_name);
+    engine::scene make_freecam_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name);
 }
 
 #endif //FREECAM_DEMO_HPP
