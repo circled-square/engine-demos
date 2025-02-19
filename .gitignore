@@ -2,5 +2,6 @@ build/
 .qtc/
 .qtc_clangd/
 .idea/
+assets/*.blend1
 CMakeLists.txt.user
 imgui.ini
