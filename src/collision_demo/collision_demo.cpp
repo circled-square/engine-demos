@@ -110,8 +110,8 @@ namespace engine_demos {
                 }
                 vec3 move_vec = vec3 {
                     (int)s.right - (int)s.left,
-                    (int)s.up - (int)s.down,
-                    (int)s.bwd - (int)s.fwd,
+                    (int)s.up    - (int)s.down,
+                    (int)s.bwd   - (int)s.fwd,
                 } * s.move_speed * app_chan.from_app().delta;
                 n->set_transform(glm::translate(n->transform(), move_vec));
             }
