@@ -69,7 +69,7 @@ namespace engine_demos {
     };
 
     scene make_collision_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
-        gal::vertex_array cube_vao = gal::vertex_array::make<vertex_t>(vertex_data, std::span(indices.data(), indices.size()));
+        gal::vertex_array cube_vao = gal::vertex_array::make<vertex_t>(vertex_data, indices);
         material cube_material(get_rm().get_retro_3d_shader(), get_rm().get_texture("assets/example.png"));
 
         mesh cube_mesh(cube_material, get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
@@ -117,7 +117,7 @@ namespace engine_demos {
             }
         });
 
-        rc<const collision_shape> col_shape = get_rm().new_from(collision_shape::from_mesh(
+        rc<const collision_shape> cube_col_shape = get_rm().new_from(collision_shape::from_mesh(
             stride_span<const glm::vec3>(vertex_data.data(), offsetof(vertex_t, pos), sizeof(vertex_t), vertex_data.size()),
             std::span<const glm::uvec3>(indices.begin(), indices.end()),
             collision_layer(1) | collision_layer(2), collision_layer(1)
@@ -125,30 +125,41 @@ namespace engine_demos {
 
 
         noderef root("");
+        {
+            root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
-        root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
+            root.add_child(noderef("camera", camera(), glm::inverse(glm::lookAt(vec3(3,6,6), vec3(0), vec3(0,1,0)))));
 
-        root.add_child(noderef("camera", camera(), glm::inverse(glm::lookAt(vec3(3,6,6), vec3(0), vec3(0,1,0)))));
+            noderef cone(get_rm().get_nodetree_from_gltf("assets/cone_with_collision.glb"), "cone");
+            {
+                cone->set_transform(glm::translate(cone->transform(), glm::vec3(2, 0, 0)));
+            }
+            root.add_child(std::move(cone));
 
-        noderef cone(get_rm().get_nodetree_from_gltf("assets/cone_with_collision.glb"), "cone");
-        cone->set_transform(glm::translate(cone->transform(), glm::vec3(2, 0, 0)));
-        root.add_child(std::move(cone));
-
-        noderef stillcube("stillcube", cube_mesh, glm::mat4(1), std::move(stillcube_script));
-        stillcube.add_child(noderef("colshape", col_shape));
-        root.add_child(std::move(stillcube));
+            noderef stillcube("stillcube", cube_mesh, glm::mat4(1), std::move(stillcube_script));
+            {
+                stillcube.add_child(noderef("colshape", cube_col_shape));
+            }
+            root.add_child(std::move(stillcube));
 
 
-        noderef kbdcube("kbdcube", cube_mesh, glm::mat4(1), std::move(kbdcube_script));
-        kbdcube->set_collision_behaviour(engine::collision_behaviour {
-            .moves_away_on_collision = true,
-        });
-        noderef kbd_colshape_node("colshape", std::move(col_shape));
-        kbd_colshape_node->set_collision_behaviour(engine::collision_behaviour {
-            .passes_events_to_father = true,
-        });
-        kbdcube.add_child(std::move(kbd_colshape_node));
-        root.add_child(std::move(kbdcube));
+            noderef kbdcube("kbdcube", cube_mesh, glm::mat4(1), std::move(kbdcube_script));
+            {
+                kbdcube->set_collision_behaviour(engine::collision_behaviour {
+                    .moves_away_on_collision = true,
+                });
+
+                noderef kbdcube_colshape_node("colshape", std::move(cube_col_shape));
+                {
+                    kbdcube_colshape_node->set_collision_behaviour(engine::collision_behaviour {
+                        .passes_events_to_father = true,
+                    });
+                }
+                kbdcube.add_child(std::move(kbdcube_colshape_node));
+            }
+            root.add_child(std::move(kbdcube));
+        }
+
 
         return scene(scene_name, std::move(root));
     }
