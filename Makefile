@@ -41,6 +41,10 @@ run:
 	make all
 	build/debug/src/main
 
+run_tests:
+	ninja -C build/debug run_engine_tests
+	ninja -C build/release run_engine_tests
+
 clean_deps:
 	rm -fr build/debug/_deps
 	rm -fr build/release/_deps

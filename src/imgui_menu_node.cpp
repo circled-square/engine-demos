@@ -61,22 +61,16 @@ namespace engine_demos {
                         auto iterator = s.sorted_delta_times.begin();
                         size_t index = 0;
 
-                        float lowest = 1.f / *iterator; // lowest framerate recorded
-                        for(; index < s.sorted_delta_times.size()/1000; index++) iterator++;
                         float low_0_1_percent = 1.f / *iterator; // low 0.1%
                         for(; index < s.sorted_delta_times.size()/100; index++) iterator++;
                         float low_1_percent = 1.f / *iterator; // low 1%
-                        // median fps is not calculated since it is by far the most expensive metric, and also the least useful
-                        // for(; index < m_sorted_delta_times.size()/2; index++) iterator++;
-                        // float median = 1.f / *iterator; // median fps
                         float average = 1.f/ (s.delta_time_total / s.delta_time_hist.size()); // average fps
 
                         ImGui::Text(
                             "average\t%.1f FPS\n"
                             "low 1%%\t%.1f FPS\n"
-                            "low 0.1%%\t%.1f FPS\n"
-                            "lowest\t%.1f FPS",
-                            average, low_1_percent, low_0_1_percent, lowest
+                            "low 0.1%%\t%.1f FPS\n",
+                            average, low_1_percent, low_0_1_percent
                         );
 
                         ImGui::Text("hist size: %lu", s.delta_time_hist.size());
