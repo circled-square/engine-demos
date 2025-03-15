@@ -12,7 +12,7 @@
 static engine::rc<engine::scene> get_start_scene();
 
 int main() {
-    engine::entry_point({1280, 720}, "demo", engine::window::hints::MAXIMIZED, get_start_scene);
+    engine::entry_point({1280, 720}, "demo", engine::window::hints{ .maximised = true }, get_start_scene);
 }
 
 static engine::rc<engine::scene> get_start_scene() {
