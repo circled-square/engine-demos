@@ -42,8 +42,8 @@ run:
 	build/debug/src/main
 
 run_tests:
-	ninja -C build/debug run_engine_tests
-	ninja -C build/release run_engine_tests
+	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/debug run_engine_tests
+	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/release run_engine_tests
 
 clean_deps:
 	rm -fr build/debug/_deps
