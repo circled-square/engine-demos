@@ -6,6 +6,7 @@
 #include <array>
 #include <engine/resources_manager.hpp>
 #include <engine/scene/renderer/mesh/material/materials.hpp>
+#include <variant>
 
 namespace engine_demos {
     using namespace glm;
@@ -117,7 +118,7 @@ namespace engine_demos {
                 return std::any(std::monostate());
             },
         });
-        root.add_child(noderef("cubes_container",engine::null_node_data(), glm::mat4(1), std::move(container_script)));
+        root.add_child(noderef("cubes_container",std::monostate(), glm::mat4(1), std::move(container_script)));
 
         rc<const stateless_script> cam_script = get_rm().new_from(stateless_script {
             .construct = [](const noderef&) { return std::any(camera_script_state()); },

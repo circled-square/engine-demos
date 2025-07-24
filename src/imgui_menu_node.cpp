@@ -94,7 +94,7 @@ namespace engine_demos {
 
         std::any menu_state = menu_state_t(std::move(scene_names), std::move(scene_name));
 
-        noderef ret("menu-node", null_node_data(), glm::mat4(1), std::move(imgui_menu_script));
+        noderef ret("menu-node", std::monostate(), glm::mat4(1), std::move(imgui_menu_script));
         ret->set_script_state(std::move(menu_state));
         return ret;
     }

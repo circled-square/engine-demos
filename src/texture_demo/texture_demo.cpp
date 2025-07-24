@@ -107,7 +107,7 @@ namespace engine_demos {
         });
 
 
-        root.add_child(noderef("imgui-tex-node", null_node_data(), glm::mat4(1), std::move(imgui_tex_script)));
+        root.add_child(noderef("imgui-tex-node", std::monostate(), glm::mat4(1), std::move(imgui_tex_script)));
 
         return scene(scene_name, std::move(root));
     }
