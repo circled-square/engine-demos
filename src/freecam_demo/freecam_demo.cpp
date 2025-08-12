@@ -29,23 +29,23 @@ namespace engine_demos {
 
     scene make_freecam_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
         application_channel_t::to_app_t to_app { .wants_mouse_cursor_captured = true };
-        noderef root("");
+        node root("");
 
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
-        noderef halftone_viewport("halftone_vp", engine::viewport(
+        node halftone_viewport("halftone_vp", engine::viewport(
             get_rm().new_from<shader>(shader::from_file("assets/shaders/halftone_postfx.glsl")),
             glm::vec2(1./2.)
         ));
 
-        noderef transparent_viewport("transparent_vp", engine::viewport(
+        node transparent_viewport("transparent_vp", engine::viewport(
             get_rm().new_from<shader>(shader::from_file("assets/shaders/transparent_postfx.glsl")),
             glm::vec2(1./3.)
         ));
 
         rc<const stateless_script> freecam_script = get_rm().new_from(stateless_script {
-            .construct = [](const noderef&){ return std::any(freecam_state()); },
-            .process = [](const noderef& n, std::any& ss, application_channel_t& app_chan) {
+            .construct = [](const node&){ return std::any(freecam_state()); },
+            .process = [](const node& n, std::any& ss, application_channel_t& app_chan) {
                 freecam_state& s = *std::any_cast<freecam_state>(&ss);
 
                 for(const event_variant_t& event : app_chan.from_app().events) {
@@ -101,11 +101,11 @@ namespace engine_demos {
         });
 
 
-        noderef camera_node("camera", engine::camera(),
+        node camera_node("camera", engine::camera(),
             glm::translate(glm::mat4(1), glm::vec3(0, 2, 0)), std::move(freecam_script));
 
         halftone_viewport.add_child(std::move(camera_node));
-        halftone_viewport.add_child(noderef(get_rm().get_nodetree_from_gltf("assets/castlebl.glb")));
+        halftone_viewport.add_child(node(get_rm().get_nodetree_from_gltf("assets/castlebl.glb")));
         transparent_viewport.add_child(std::move(halftone_viewport));
         root.add_child(std::move(transparent_viewport));
 

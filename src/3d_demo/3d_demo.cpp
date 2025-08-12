@@ -67,7 +67,7 @@ namespace engine_demos {
     };
 
     scene make_3d_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
-        noderef root("");
+        node root("");
 
         constexpr int cube_amount_constant = 5; // n_of_cubes = (cube_amount_constant * 2 + 1) ^ 3
         constexpr int nodetree_depth = 0; // number of useless layers to add (useful to artificially make the scene more CPU intensive without making it more GPU intensive)
@@ -78,9 +78,9 @@ namespace engine_demos {
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
         rc<const stateless_script> container_script = get_rm().new_from(stateless_script {
-            .construct = [](const noderef& n) {
+            .construct = [](const node& n) {
                 rc<const stateless_script> centre_cube_script = get_rm().new_from(stateless_script {
-                    .process = [](const noderef& n, std::any&, application_channel_t& app_chan) {
+                    .process = [](const node& n, std::any&, application_channel_t& app_chan) {
                         n->set_transform(rotate(n->transform(), app_chan.from_app().delta * pi / 8, z_axis + y_axis / 2.f));
                     },
                 });
@@ -97,7 +97,7 @@ namespace engine_demos {
                         for(int z = -k; z <= k; z++) {
                             vec3 displacement = vec3{x,y,z} + rand_displacement_amount * pow(distr(rng), 1.5f) * (vec3{x,y,z} == vec3{0} ? vec3{0} : glm::normalize(vec3{distr(rng), distr(rng), distr(rng)}));
 
-                            noderef c(
+                            node c(
                                 std::format("cube_{},{},{}", x, y, z),
                                 cube,
                                 scale(translate(mat4(1), displacement), vec3(cube_scale))
@@ -105,7 +105,7 @@ namespace engine_demos {
 
                             //artificially increase depth of tree
                             for(int i = 0; i < nodetree_depth; i++) {
-                                noderef p(c->name());
+                                node p(c->name());
                                 p.add_child(c);
                                 c = p;
                             }
@@ -113,16 +113,16 @@ namespace engine_demos {
                         }
                     }
                 }
-                n->get_child("cube_0,0,0").attach_script(std::move(centre_cube_script));
+                node_data::attach_script(n->get_child("cube_0,0,0"), std::move(centre_cube_script));
 
                 return std::any(std::monostate());
             },
         });
-        root.add_child(noderef("cubes_container",std::monostate(), glm::mat4(1), std::move(container_script)));
+        root.add_child(node("cubes_container",std::monostate(), glm::mat4(1), std::move(container_script)));
 
         rc<const stateless_script> cam_script = get_rm().new_from(stateless_script {
-            .construct = [](const noderef&) { return std::any(camera_script_state()); },
-            .process = [](const noderef& n, std::any& ss, application_channel_t& app_chan) {
+            .construct = [](const node&) { return std::any(camera_script_state()); },
+            .process = [](const node& n, std::any& ss, application_channel_t& app_chan) {
                 camera_script_state& s = *std::any_cast<camera_script_state>(&ss);
                 s.time += app_chan.from_app().delta;
 
@@ -132,7 +132,7 @@ namespace engine_demos {
                 n->set_transform(glm::inverse(glm::lookAt(pos, vec3(0), vec3(0,1,0))));
             }
         });
-        root.add_child(noderef("camera", camera(), glm::translate(glm::mat4(1), glm::vec3(0,0,4)), std::move(cam_script)));
+        root.add_child(node("camera", camera(), glm::translate(glm::mat4(1), glm::vec3(0,0,4)), std::move(cam_script)));
 
         return scene(std::move(scene_name), std::move(root), engine::render_flags_t { .face_culling = engine::face_culling_t::back });
     }

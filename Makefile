@@ -38,7 +38,7 @@ compile_debug_clangtidy:
 
 
 run:
-	make all
+	make compile_debug
 	build/debug/src/main
 
 run_tests:

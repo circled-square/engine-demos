@@ -76,16 +76,16 @@ namespace engine_demos {
 
 
         rc<const stateless_script> stillcube_script = get_rm().new_from(stateless_script {
-            .process = [](const noderef& n, std::any&, application_channel_t& app_chan) {
+            .process = [](const node& n, std::any&, application_channel_t& app_chan) {
                 n->set_transform(rotate(n->transform(), app_chan.from_app().delta * pi / 8, z_axis + y_axis / 2.f));
             },
         });
 
         rc<const stateless_script> kbdcube_script = get_rm().new_from(stateless_script{
-            .construct = [](const noderef&) {
+            .construct = [](const node&) {
                 return std::any(kbdcube_state());
             },
-            .process = [](const noderef& n, std::any& state, application_channel_t& app_chan) {
+            .process = [](const node& n, std::any& state, application_channel_t& app_chan) {
                 EXPECTS(state.type() == typeid(kbdcube_state));
                 kbdcube_state& s = *std::any_cast<kbdcube_state>(&state);
 
@@ -124,34 +124,34 @@ namespace engine_demos {
         ));
 
 
-        noderef root("");
+        node root("");
         {
             root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
-            root.add_child(noderef("camera", camera(), glm::inverse(glm::lookAt(vec3(3,6,6), vec3(0), vec3(0,1,0)))));
+            root.add_child(node("camera", camera(), glm::inverse(glm::lookAt(vec3(3,6,6), vec3(0), vec3(0,1,0)))));
 
-            noderef cone(get_rm().get_nodetree_from_gltf("assets/cone_with_collision.glb"), "cone");
+            node cone(get_rm().get_nodetree_from_gltf("assets/cone_with_collision.glb"), "cone");
             {
                 cone->set_transform(glm::translate(cone->transform(), glm::vec3(2, 0, 0)));
             }
             root.add_child(std::move(cone));
 
-            noderef stillcube("stillcube", cube_mesh, glm::mat4(1), std::move(stillcube_script));
+            node stillcube("stillcube", cube_mesh, glm::mat4(1), std::move(stillcube_script));
             {
-                stillcube.add_child(noderef("colshape", cube_col_shape));
+                stillcube.add_child(node("colshape", cube_col_shape));
             }
             root.add_child(std::move(stillcube));
 
 
-            noderef kbdcube("kbdcube", cube_mesh, glm::mat4(1), std::move(kbdcube_script));
+            node kbdcube("kbdcube", cube_mesh, glm::mat4(1), std::move(kbdcube_script));
             {
-                kbdcube->set_collision_behaviour(engine::collision_behaviour {
+                kbdcube->set_collision_behaviour(engine::node_collision_behaviour {
                     .moves_away_on_collision = true,
                 });
 
-                noderef kbdcube_colshape_node("colshape", std::move(cube_col_shape));
+                node kbdcube_colshape_node("colshape", std::move(cube_col_shape));
                 {
-                    kbdcube_colshape_node->set_collision_behaviour(engine::collision_behaviour {
+                    kbdcube_colshape_node->set_collision_behaviour(engine::node_collision_behaviour {
                         .passes_events_to_father = true,
                     });
                 }
