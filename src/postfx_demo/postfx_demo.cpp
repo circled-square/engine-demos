@@ -42,7 +42,7 @@ namespace engine_demos {
                 n->set_transform(rotate(n->transform(), c.from_app().delta * pi / 16, y_axis));
             },
         });
-        node_data::attach_script(root->get_from_path("transparent-vp/halftone-vp/castle"),std::move(rotate_script));
+        node_data::attach_script(root->get_descendant_from_path("transparent-vp/halftone-vp/castle"),std::move(rotate_script));
 
         return scene(scene_name, std::move(root));
     }
