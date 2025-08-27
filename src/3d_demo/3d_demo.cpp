@@ -1,12 +1,26 @@
 #include "3d_demo.hpp"
 
 #include "../imgui_menu_node.hpp"
+#include "engine/scene/application_channel.hpp"
+#include "engine/scene/renderer/mesh/material.hpp"
+#include "slogga/log.hpp"
 #include <imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <array>
 #include <engine/resources_manager.hpp>
 #include <engine/scene/renderer/mesh/material/materials.hpp>
+#include <engine/utils/format_glm.hpp>
 #include <variant>
+
+/* This demo demonstrates a few things:
+ * - 3d rendering
+ * - use of custom texture on a raw-data 3d mesh (the cube)
+ * - use of the scene tree
+ * - use of script to programmatically generate a scene (container_script)
+ * - use of script to manipulate objects' transforms (camera and centre cube)
+ * - custom script state for the camera (the time, which would be unnecessary since it can be retrieved through the application_channel_t)
+ * - custom uniform passed to the (centre) cube's material (to offset its texture), without having any effect on other instances (other cubes) of the same material (done through its own script)
+ */
 
 namespace engine_demos {
     using namespace glm;
@@ -66,14 +80,15 @@ namespace engine_demos {
         float time = 0.f;
     };
 
+
     scene make_3d_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
         node root("");
 
         constexpr int cube_amount_constant = 5; // n_of_cubes = (cube_amount_constant * 2 + 1) ^ 3
         constexpr int nodetree_depth = 0; // number of useless layers to add (useful to artificially make the scene more CPU intensive without making it more GPU intensive)
-        constexpr float rand_displacement_amount = 300;
+        constexpr float rand_displacement_amount = 100;
         constexpr float cube_scale = .5f;
-        constexpr float camera_relative_distance = 2.5f;
+        constexpr float camera_relative_distance = 1.0f;
 
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
@@ -82,10 +97,20 @@ namespace engine_demos {
                 rc<const stateless_script> centre_cube_script = get_rm().new_from(stateless_script {
                     .process = [](const node& n, std::any&, application_channel_t& app_chan) {
                         n->set_transform(rotate(n->transform(), app_chan.from_app().delta * pi / 8, z_axis + y_axis / 2.f));
+
+                        static float last_delta = 0.f;
+
+                        n->get<mesh>()
+                            .primitives()[0].primitive_material
+                            .get_custom_uniforms()[0].second = engine::uniform_value_variant((last_delta - app_chan.from_app().delta) * 200.f);
+
+
+                        last_delta = app_chan.from_app().delta;
                     },
                 });
                 gal::vertex_array cube_vao = gal::vertex_array::make<vertex_t>(vertex_data, std::span(indices.data(), indices.size()));
-                material cube_material(get_rm().get_retro_3d_shader(), get_rm().get_texture("assets/example.png"));
+                material cube_material(get_rm().new_from(shader::from_file("assets/shaders/custom_uniform_example.glsl")), get_rm().get_texture("assets/example.png"));
+                cube_material.get_custom_uniforms().push_back(std::make_pair(std::string("u_custom"), engine::uniform_value_variant(0.f)));
                 mesh cube(cube_material, get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
 
                 const int k = cube_amount_constant;
@@ -95,7 +120,7 @@ namespace engine_demos {
                 for(int x = -k; x <= k; x++) {
                     for(int y = -k; y <= k; y++) {
                         for(int z = -k; z <= k; z++) {
-                            vec3 displacement = vec3{x,y,z} + rand_displacement_amount * pow(distr(rng), 1.5f) * (vec3{x,y,z} == vec3{0} ? vec3{0} : glm::normalize(vec3{distr(rng), distr(rng), distr(rng)}));
+                            vec3 displacement = vec3{x,y,z} == vec3(0) ? vec3(0) : vec3{x,y,z} + rand_displacement_amount * pow(distr(rng), 1.5f) * (vec3{x,y,z} == vec3{0} ? vec3{0} : glm::normalize(vec3{distr(rng), distr(rng), distr(rng)}));
 
                             node c(
                                 std::format("cube_{},{},{}", x, y, z),
@@ -134,6 +159,6 @@ namespace engine_demos {
         });
         root.add_child(node("camera", camera(), glm::translate(glm::mat4(1), glm::vec3(0,0,4)), std::move(cam_script)));
 
-        return scene(std::move(scene_name), std::move(root), engine::render_flags_t { .face_culling = engine::face_culling_t::back });
+        return scene(std::move(scene_name), std::move(root));
     }
 } // namespace engine_demos

@@ -35,5 +35,5 @@ static engine::rc<engine::scene> get_start_scene() {
         engine::get_rm().dbg_add_scene_constructor(name, [=](){ return ctor(names, name); });
     }
 
-    return engine::get_rm().get_scene("collision demo");
+    return engine::get_rm().get_scene("freecam demo");
 }

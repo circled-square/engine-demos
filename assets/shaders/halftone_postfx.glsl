@@ -1,4 +1,3 @@
-#version 440 core // fool syntax highlighting
 #uniforms
 uniform sampler2D u_texture_slot;
 uniform float u_time;

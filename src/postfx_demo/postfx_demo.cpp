@@ -19,30 +19,40 @@ namespace engine_demos {
 
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
-        node halftone_vp("halftone-vp", engine::viewport(
-            get_rm().new_from<shader>(shader::from_file("assets/shaders/halftone_postfx.glsl")),
+        node halftone_viewport("halftone_vp", engine::viewport(
             glm::vec2(1./2.)
         ));
 
-        node transparent_vp("transparent-vp", engine::viewport(
-            get_rm().new_from<shader>(shader::from_file("assets/shaders/transparent_postfx.glsl")),
+        node halftone_viewport_mesh("halftone_vp_mesh", mesh(material(
+            get_rm().new_from<shader>(shader::from_file("assets/shaders/halftone_postfx.glsl")),
+            halftone_viewport->get<viewport>().fbo().get_texture()
+        ), get_rm().get_whole_screen_vao()));
+
+        node transparent_viewport("transparent_vp", engine::viewport(
             glm::vec2(1./3.)
         ));
 
+        node transparent_viewport_mesh("transparent_vp_mesh", mesh(material(
+            get_rm().new_from<shader>(shader::from_file("assets/shaders/transparent_postfx.glsl")),
+            transparent_viewport->get<viewport>().fbo().get_texture()
+        ), get_rm().get_whole_screen_vao()));
+
+
         node cam("camera", camera(), glm::translate(glm::mat4(1), vec3(0,50,250)));
 
-        halftone_vp.add_child(std::move(cam));
-        node castle(get_rm().get_nodetree_from_gltf("assets/castlebl.glb"), "castle");
-        halftone_vp.add_child(std::move(castle));
-        transparent_vp.add_child(std::move(halftone_vp));
-        root.add_child(std::move(transparent_vp));
+        halftone_viewport.add_child(std::move(cam));
+        halftone_viewport.add_child(node(get_rm().get_nodetree_from_gltf("assets/castlebl.glb"), "castle"));
+        halftone_viewport_mesh.add_child(std::move(halftone_viewport));
+        transparent_viewport.add_child(std::move(halftone_viewport_mesh));
+        transparent_viewport_mesh.add_child(std::move(transparent_viewport));
+        root.add_child(std::move(transparent_viewport_mesh));
 
         rc<const stateless_script> rotate_script = get_rm().new_from(stateless_script {
             .process = [](const node& n, std::any&, application_channel_t& c) {
                 n->set_transform(rotate(n->transform(), c.from_app().delta * pi / 16, y_axis));
             },
         });
-        node_data::attach_script(root->get_descendant_from_path("transparent-vp/halftone-vp/castle"),std::move(rotate_script));
+        node_data::attach_script(root->get_descendant_from_path("transparent_vp_mesh/transparent_vp/halftone_vp_mesh/halftone_vp/castle"),std::move(rotate_script));
 
         return scene(scene_name, std::move(root));
     }

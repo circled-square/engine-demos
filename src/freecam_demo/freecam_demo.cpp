@@ -33,15 +33,24 @@ namespace engine_demos {
 
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
+
         node halftone_viewport("halftone_vp", engine::viewport(
-            get_rm().new_from<shader>(shader::from_file("assets/shaders/halftone_postfx.glsl")),
             glm::vec2(1./2.)
         ));
 
+        node halftone_viewport_mesh("halftone_vp_mesh", mesh(material(
+            get_rm().new_from<shader>(shader::from_file("assets/shaders/halftone_postfx.glsl")),
+            halftone_viewport->get<viewport>().fbo().get_texture()
+        ), get_rm().get_whole_screen_vao()));
+
         node transparent_viewport("transparent_vp", engine::viewport(
-            get_rm().new_from<shader>(shader::from_file("assets/shaders/transparent_postfx.glsl")),
             glm::vec2(1./3.)
         ));
+
+        node transparent_viewport_mesh("transparent_vp_mesh", mesh(material(
+            get_rm().new_from<shader>(shader::from_file("assets/shaders/transparent_postfx.glsl")),
+            transparent_viewport->get<viewport>().fbo().get_texture()
+        ), get_rm().get_whole_screen_vao()));
 
         rc<const stateless_script> freecam_script = get_rm().new_from(stateless_script {
             .construct = [](const node&){ return std::any(freecam_state()); },
@@ -106,8 +115,10 @@ namespace engine_demos {
 
         halftone_viewport.add_child(std::move(camera_node));
         halftone_viewport.add_child(node(get_rm().get_nodetree_from_gltf("assets/castlebl.glb")));
-        transparent_viewport.add_child(std::move(halftone_viewport));
-        root.add_child(std::move(transparent_viewport));
+        halftone_viewport_mesh.add_child(std::move(halftone_viewport));
+        transparent_viewport.add_child(std::move(halftone_viewport_mesh));
+        transparent_viewport_mesh.add_child(std::move(transparent_viewport));
+        root.add_child(std::move(transparent_viewport_mesh));
 
         return engine::scene(scene_name, std::move(root), render_flags_t{}, std::move(to_app));
     }
