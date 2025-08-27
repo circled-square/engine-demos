@@ -5,8 +5,13 @@
 #include <engine/resources_manager.hpp>
 #include <array>
 
+/* This is a fairly simple, lower level demo meant to show direct use of the GAL (Graphics Abstraction Layer) library.
+ * All rendering is done on 2 imgui windows; the first simply shows a texture, the second shows the result of
+ * rendering to a framebuffer object, using a custom shader. The use of anything under engine:: namespace is avoided
+ * wherever possible.
+ */
+
 namespace engine_demos {
-    using namespace engine;
     static gal::vertex_array make_whole_screen_vao() {
         struct post_process_vertex_t {
             glm::vec2 pos;
@@ -62,14 +67,26 @@ namespace engine_demos {
     };
 
     engine::scene make_texture_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
-        node root("");
+        engine::node root("");
 
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
-        rc<const stateless_script> imgui_tex_script = get_rm().new_from(stateless_script {
-            .construct = [](const node&) { return std::any(imgui_tex_script_state_t()); },
-            .process = [](const node& n, std::any& ss, application_channel_t& c) {
+        engine::rc<const engine::stateless_script> imgui_tex_script = engine::get_rm().new_from(engine::stateless_script {
+            .construct = [](const engine::node&) { return std::any(imgui_tex_script_state_t()); },
+            .process = [](const engine::node& n, std::any& ss, engine::application_channel_t& c) {
                 imgui_tex_script_state_t& s = *std::any_cast<imgui_tex_script_state_t>(&ss);
+
+                ImGui::Begin("Texture Window");
+                {
+                    // Using a Child allows to fill all the space of the window.
+                    ImGui::BeginChild("TextureRender2");
+                    ImVec2 wsize = ImGui::GetWindowSize();
+                    // Because I use the texture from OpenGL, I need to invert the V from the UV.
+                    ImGui::Image((ImTextureID)s.tex.get_gl_id(), wsize, ImVec2(0, 1), ImVec2(1, 0));
+                    ImGui::EndChild();
+                }
+                ImGui::End();
+
                 ImGui::Begin("Fbo Texture Window");
                 {
                     s.fbo.bind();
@@ -92,23 +109,12 @@ namespace engine_demos {
                     ImGui::EndChild();
                 }
                 ImGui::End();
-
-                ImGui::Begin("Texture Window");
-                {
-                    // Using a Child allows to fill all the space of the window.
-                    ImGui::BeginChild("TextureRender2");
-                    ImVec2 wsize = ImGui::GetWindowSize();
-                    // Because I use the texture from OpenGL, I need to invert the V from the UV.
-                    ImGui::Image((ImTextureID)s.tex.get_gl_id(), wsize, ImVec2(0, 1), ImVec2(1, 0));
-                    ImGui::EndChild();
-                }
-                ImGui::End();
             }
         });
 
 
-        root.add_child(node("imgui-tex-node", std::monostate(), glm::mat4(1), std::move(imgui_tex_script)));
+        root.add_child(engine::node("imgui-tex-node", std::monostate(), glm::mat4(1), std::move(imgui_tex_script)));
 
-        return scene(scene_name, std::move(root));
+        return engine::scene(scene_name, std::move(root));
     }
 } // namespace engine_demos

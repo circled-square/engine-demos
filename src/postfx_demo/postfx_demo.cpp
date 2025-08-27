@@ -4,6 +4,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <engine/resources_manager.hpp>
 
+// This 3d rendered demo shows postfx shaders applied to a gltf-imported model
+
 namespace engine_demos {
     using namespace glm;
     using namespace engine;

@@ -4,6 +4,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <engine/resources_manager.hpp>
 
+// This is a simple 3d rendered demo showing gltf importing in action
+
 namespace engine_demos {
     using namespace glm;
     using namespace engine;

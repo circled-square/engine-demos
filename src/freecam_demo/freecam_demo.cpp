@@ -5,6 +5,9 @@
 #include <engine/resources_manager.hpp>
 #include <engine/application/window.hpp>
 
+/* This demo showcases a fairly complex use of the engine, with postfx, gltf importing,
+ * keyboard controls, mouse capture, scripting... the list goes on (it doesn't)
+ */
 
 namespace engine_demos {
     using namespace glm;

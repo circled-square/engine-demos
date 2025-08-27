@@ -8,6 +8,8 @@
 #include <engine/scene/renderer/mesh/material/materials.hpp>
 #include <engine/application/window.hpp>
 
+// This demo illustrates collisions and different collision behaviours
+
 namespace engine_demos {
     using namespace glm;
     using namespace engine;
