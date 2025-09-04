@@ -78,6 +78,63 @@ namespace engine_demos {
                         ImGui::Unindent(16.f);
                     }
 
+                    // traverse the tree to show it to the user
+                    if(ImGui::CollapsingHeader("Scene Hierarchy")) {
+                        ImGui::Indent(16.f);
+                        // find root
+                        EXPECTS((rc<node_data>)n);
+                        rc<node_data> root = n;
+                        while(true) {
+                            EXPECTS(root);
+                            rc<node_data> new_root = root->get_father();
+                            if(!new_root)
+                                break;
+                            else
+                                root = std::move(new_root);
+                            ENSURES(root);
+                        }
+                        ENSURES(root);
+                        //dfs
+                        struct stack_tuple_t {
+                            rc<node_data> node;
+                            enum {preorder, postorder} visit_type;
+                        };
+                        std::vector<stack_tuple_t> dfs_stack;
+                        dfs_stack.push_back({ std::move(root), stack_tuple_t::preorder });
+                        while(!dfs_stack.empty()) {
+                            auto[n, visit_type] = dfs_stack.back();
+                            dfs_stack.pop_back();
+                            std::string n_name;
+
+                            if(n->get_father()) {
+                                n_name = n->name();
+                            } else {
+                                n_name = std::format("(root) {}", n->name());
+                            }
+
+                            if(visit_type == stack_tuple_t::preorder) {
+                                if(n->children().empty()) {
+                                    // this is a leaf (just print the name)
+                                    ImGui::Text("- %s", n_name.c_str());
+                                } else {
+                                    // this is not a leaf (print the name in a collapsing header and its children under it)
+                                    ImGuiTreeNodeFlags flags = n->children().size() >= 5 ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
+                                    if(ImGui::CollapsingHeader(n_name.c_str(), flags)) {
+                                        ImGui::Indent(8.f);
+                                        dfs_stack.push_back({n, stack_tuple_t::postorder});
+
+                                        for(std::int64_t i = n->children().size()-1; i >= 0; i--)
+                                            dfs_stack.push_back({ n->children()[i], stack_tuple_t::preorder });
+                                    }
+                                }
+                            } else {
+                                ASSERTS(visit_type == stack_tuple_t::postorder);
+                                ImGui::Unindent(8.f);
+                            }
+                        }
+                        ImGui::Unindent(16.f);
+                    }
+
                     if(ImGui::Button("Collect Garbage"))
                         get_rm().collect_garbage();
 
@@ -88,7 +145,6 @@ namespace engine_demos {
                     ImGui::SetWindowFocus(nullptr);
                     s.is_first_frame = false;
                 }
-
             }
         });
 

@@ -6,6 +6,7 @@
 #include "gltf_demo/gltf_demo.hpp"
 #include "postfx_demo/postfx_demo.hpp"
 #include "freecam_demo/freecam_demo.hpp"
+#include "viewport_demo/viewport_demo.hpp"
 #include "collision_demo/collision_demo.hpp"
 
 
@@ -27,6 +28,7 @@ static engine::rc<engine::scene> get_start_scene() {
         { "gltf demo",      engine_demos::make_gltf_demo },
         { "postfx demo",    engine_demos::make_postfx_demo },
         { "freecam demo",   engine_demos::make_freecam_demo },
+        { "viewport demo",  engine_demos::make_viewport_demo },
         { "collision demo", engine_demos::make_collision_demo }
     };
 
@@ -35,5 +37,5 @@ static engine::rc<engine::scene> get_start_scene() {
         engine::get_rm().dbg_add_scene_constructor(name, [=](){ return ctor(names, name); });
     }
 
-    return engine::get_rm().get_scene("freecam demo");
+    return engine::get_rm().get_scene("viewport demo");
 }
