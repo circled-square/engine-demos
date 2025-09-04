@@ -4,22 +4,23 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <engine/resources_manager.hpp>
 #include <engine/application/window.hpp>
+#include <engine/utils/constants.hpp>
 
 /* This demo showcases a fairly complex use of the engine, with postfx, gltf importing,
  * keyboard controls, mouse capture, scripting... the list goes on (it doesn't)
  */
 
 namespace engine_demos {
-    using namespace glm;
     using namespace engine;
+    using glm::mat4; using glm::vec4; using glm::vec3; using glm::vec2;
 
-    static glm::mat4 to_rotation_mat(const glm::mat4& m) {
-        glm::mat4 mat = m;
+    static mat4 to_rotation_mat(const mat4& m) {
+        mat4 mat = m;
         mat[3] = vec4(0);
         return mat;
     }
-    static glm::mat4 clear_first_3_rows(const glm::mat4& m) {
-        glm::mat4 mat = m;
+    static mat4 clear_first_3_rows(const mat4& m) {
+        mat4 mat = m;
         mat[0] = mat[1] = mat[2] = vec4(0);
         return mat;
     }
@@ -38,7 +39,7 @@ namespace engine_demos {
 
 
         node halftone_viewport("halftone_vp", engine::viewport(
-            glm::vec2(1./2.)
+            vec2(1./2.)
         ));
 
         node halftone_viewport_mesh("halftone_vp_mesh", mesh(material(
@@ -47,7 +48,7 @@ namespace engine_demos {
         ), get_rm().get_whole_screen_vao()));
 
         node transparent_viewport("transparent_vp", engine::viewport(
-            glm::vec2(1./3.)
+            vec2(1./3.)
         ));
 
         node transparent_viewport_mesh("transparent_vp_mesh", mesh(material(
@@ -83,25 +84,25 @@ namespace engine_demos {
                                 app_chan.to_app().wants_mouse_cursor_captured = !app_chan.from_app().mouse_cursor_is_captured;
                             }
                     }, [&s, &n](const mouse_move_event_t& e) {
-                        glm::vec2 movement = e.movement;
+                        vec2 movement = e.movement;
                         constexpr float movement_multiplier = 0.002;
                         movement *= movement_multiplier;
 
                         float old_rotation = s.current_y_rotation;
                         s.current_y_rotation += movement.y;
-                        s.current_y_rotation = std::clamp(s.current_y_rotation, -glm::pi<float>()/2.f * 0.99f, glm::pi<float>()/2.f * 0.99f);
+                        s.current_y_rotation = std::clamp(s.current_y_rotation, -pi/2.f * 0.99f, pi/2.f * 0.99f);
                         movement.y = s.current_y_rotation - old_rotation;
 
-                        glm::mat4 cam = n->transform();
+                        mat4 cam = n->transform();
 
-                        cam = glm::rotate(glm::mat4(1), -movement.x, glm::vec3(0,1,0)) * to_rotation_mat(cam) + clear_first_3_rows(cam);
-                        cam = glm::rotate(cam, -movement.y, glm::vec3(1,0,0));
+                        cam = glm::rotate(mat4(1), -movement.x, y_axis) * to_rotation_mat(cam) + clear_first_3_rows(cam);
+                        cam = glm::rotate(cam, -movement.y, x_axis);
                         n->set_transform(cam);
                     });
                     match_variant(event, [](auto){});
                 }
 
-                glm::vec3 movement = glm::vec3(
+                vec3 movement(
                     (s.right?1:0) - (s.left?1:0),
                     (s.up?1:0) - (s.down?1:0),
                     (s.bwd?1:0) - (s.fwd?1:0)
@@ -114,7 +115,7 @@ namespace engine_demos {
 
 
         node camera_node("camera", engine::camera(),
-            glm::translate(glm::mat4(1), glm::vec3(0, 2, 0)), std::move(freecam_script));
+            glm::translate(mat4(1), vec3(0, 2, 0)), std::move(freecam_script));
 
         halftone_viewport.add_child(std::move(camera_node));
         halftone_viewport.add_child(node(get_rm().get_nodetree_from_gltf("assets/castlebl.glb")));

@@ -7,15 +7,13 @@
 #include <engine/resources_manager.hpp>
 #include <engine/scene/renderer/mesh/material/materials.hpp>
 #include <engine/application/window.hpp>
+#include <engine/utils/constants.hpp>
 
 // This demo illustrates collisions and different collision behaviours
 
 namespace engine_demos {
-    using namespace glm;
     using namespace engine;
-
-    constexpr vec3 x_axis = vec3(1,0,0), y_axis = vec3(0,1,0), z_axis = vec3(0,0,1);
-    constexpr float pi = glm::pi<f32>();
+    using glm::mat4; using glm::uvec3; using glm::vec3;
 
     using vertex_t = engine::retro_3d_shader_vertex_t;
 
@@ -120,8 +118,8 @@ namespace engine_demos {
         });
 
         rc<const collision_shape> cube_col_shape = get_rm().new_from(collision_shape::from_mesh(
-            stride_span<const glm::vec3>(vertex_data.data(), offsetof(vertex_t, pos), sizeof(vertex_t), vertex_data.size()),
-            std::span<const glm::uvec3>(indices.begin(), indices.end()),
+            stride_span<const vec3>(vertex_data.data(), offsetof(vertex_t, pos), sizeof(vertex_t), vertex_data.size()),
+            std::span<const uvec3>(indices.begin(), indices.end()),
             collision_layer(1) | collision_layer(2), collision_layer(1)
         ));
 
@@ -134,18 +132,18 @@ namespace engine_demos {
 
             node cone(get_rm().get_nodetree_from_gltf("assets/cone_with_collision.glb"), "cone");
             {
-                cone->set_transform(glm::translate(cone->transform(), glm::vec3(2, 0, 0)));
+                cone->set_transform(glm::translate(cone->transform(), vec3(2, 0, 0)));
             }
             root.add_child(std::move(cone));
 
-            node stillcube("stillcube", cube_mesh, glm::mat4(1), std::move(stillcube_script));
+            node stillcube("stillcube", cube_mesh, mat4(1), std::move(stillcube_script));
             {
                 stillcube.add_child(node("colshape", cube_col_shape));
             }
             root.add_child(std::move(stillcube));
 
 
-            node kbdcube("kbdcube", cube_mesh, glm::mat4(1), std::move(kbdcube_script));
+            node kbdcube("kbdcube", cube_mesh, mat4(1), std::move(kbdcube_script));
             {
                 kbdcube->set_collision_behaviour(engine::node_collision_behaviour {
                     .moves_away_on_collision = true,

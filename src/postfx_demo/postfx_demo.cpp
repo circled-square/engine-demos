@@ -3,18 +3,12 @@
 #include "../imgui_menu_node.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <engine/resources_manager.hpp>
+#include <engine/utils/constants.hpp>
 
 // This 3d rendered demo shows postfx shaders applied to a gltf-imported model
 
 namespace engine_demos {
-    using namespace glm;
     using namespace engine;
-
-    //TODO: put this into a constants header in the engine, under utils
-    [[maybe_unused]]
-    constexpr vec3 x_axis = vec3(1,0,0), y_axis = vec3(0,1,0), z_axis = vec3(0,0,1);
-    [[maybe_unused]]
-    constexpr float pi = glm::pi<float>();
 
     scene make_postfx_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
         node root("");
@@ -40,7 +34,7 @@ namespace engine_demos {
         ), get_rm().get_whole_screen_vao()));
 
 
-        node cam("camera", camera(), glm::translate(glm::mat4(1), vec3(0,50,250)));
+        node cam("camera", camera(), glm::translate(glm::mat4(1), glm::vec3(0,50,250)));
 
         halftone_viewport.add_child(std::move(cam));
         halftone_viewport.add_child(node(get_rm().get_nodetree_from_gltf("assets/castlebl.glb"), "castle"));

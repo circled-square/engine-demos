@@ -5,18 +5,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <engine/resources_manager.hpp>
 #include <engine/scene/renderer/mesh/material/materials.hpp>
+#include <engine/utils/constants.hpp>
 
 // This 3d rendered demo shows postfx shaders applied to a gltf-imported model
 
 namespace engine_demos {
-    using namespace glm;
     using namespace engine;
-
-    //TODO: put this into a constants header in the engine, under utils
-    [[maybe_unused]]
-    constexpr vec3 x_axis = vec3(1,0,0), y_axis = vec3(0,1,0), z_axis = vec3(0,0,1);
-    [[maybe_unused]]
-    constexpr float pi = glm::pi<float>();
+    using glm::vec3; using glm::uvec3; using glm::vec4; using glm::mat4;
 
     using vertex_t = engine::retro_3d_shader_vertex_t;
 
@@ -93,7 +88,7 @@ namespace engine_demos {
         ), get_rm().new_from(std::move(cube_vao))));
 
 
-        node subscene_cam("subscene_camera", camera(), glm::translate(glm::mat4(1), vec3(0,50,250)));
+        node subscene_cam("subscene_camera", camera(), glm::translate(mat4(1), vec3(0,50,250)));
         node cam("camera", camera(), glm::inverse(glm::lookAt(vec3(0,1,2), vec3(0,0,0), vec3(0,1,0))));
 
         halftone_viewport.add_child(std::move(subscene_cam));

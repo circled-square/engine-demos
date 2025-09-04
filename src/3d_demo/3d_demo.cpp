@@ -3,13 +3,13 @@
 #include "../imgui_menu_node.hpp"
 #include "engine/scene/application_channel.hpp"
 #include "engine/scene/renderer/mesh/material.hpp"
-#include "slogga/log.hpp"
 #include <imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <array>
 #include <engine/resources_manager.hpp>
 #include <engine/scene/renderer/mesh/material/materials.hpp>
 #include <engine/utils/format_glm.hpp>
+#include <engine/utils/constants.hpp>
 #include <variant>
 
 /* This demo demonstrates a few things:
@@ -23,11 +23,8 @@
  */
 
 namespace engine_demos {
-    using namespace glm;
     using namespace engine;
-
-    constexpr vec3 x_axis = vec3(1,0,0), y_axis = vec3(0,1,0), z_axis = vec3(0,0,1);
-    constexpr float pi = glm::pi<f32>();
+    using glm::mat4; using glm::uvec3; using glm::vec3;
 
     using vertex_t = engine::retro_3d_shader_vertex_t;
 
@@ -120,7 +117,7 @@ namespace engine_demos {
                 for(int x = -k; x <= k; x++) {
                     for(int y = -k; y <= k; y++) {
                         for(int z = -k; z <= k; z++) {
-                            vec3 displacement = vec3{x,y,z} == vec3(0) ? vec3(0) : vec3{x,y,z} + rand_displacement_amount * pow(distr(rng), 1.5f) * (vec3{x,y,z} == vec3{0} ? vec3{0} : glm::normalize(vec3{distr(rng), distr(rng), distr(rng)}));
+                            vec3 displacement = vec3{x,y,z} == vec3(0) ? vec3(0) : vec3{x,y,z} + rand_displacement_amount * powf((float)distr(rng), 1.5f) * (vec3{x,y,z} == vec3{0} ? vec3{0} : glm::normalize(vec3{distr(rng), distr(rng), distr(rng)}));
 
                             node c(
                                 std::format("cube_{},{},{}", x, y, z),
@@ -143,7 +140,7 @@ namespace engine_demos {
                 return std::any(std::monostate());
             },
         });
-        root.add_child(node("cubes_container",std::monostate(), glm::mat4(1), std::move(container_script)));
+        root.add_child(node("cubes_container",std::monostate(), mat4(1), std::move(container_script)));
 
         rc<const stateless_script> cam_script = get_rm().new_from(stateless_script {
             .construct = [](const node&) { return std::any(camera_script_state()); },
@@ -157,7 +154,7 @@ namespace engine_demos {
                 n->set_transform(glm::inverse(glm::lookAt(pos, vec3(0), vec3(0,1,0))));
             }
         });
-        root.add_child(node("camera", camera(), glm::translate(glm::mat4(1), glm::vec3(0,0,4)), std::move(cam_script)));
+        root.add_child(node("camera", camera(), glm::translate(mat4(1), vec3(0,0,4)), std::move(cam_script)));
 
         return scene(std::move(scene_name), std::move(root));
     }
