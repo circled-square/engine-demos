@@ -21,7 +21,6 @@ precision lowp float;
 in vec2 v_tex_coord;
 out vec4 color;
 uniform sampler2D u_texture_slot;
-uniform sampler2D u_noise_texture_slot;
 uniform float u_time;
 uniform ivec2 u_output_resolution;
 
@@ -35,19 +34,22 @@ const mat4x2 color_component_offsets = mat4x2(
 
 const float max_distance = 1.4;// radius in source pixel space for a dot of a cmyk component of value 1
 
-const float cmyk_luminance = 1.;
+const vec4 color_correction_cmyk = vec4(1.0, 1.1, 0.95, 1.0);
 
 float norm_squared(vec2 v);
 vec4 rgb_to_cmyk(vec3 rgb);
 vec3 cmyk_to_rgb(vec4 cmyk);
 
+const float upscaling_factor = 2.0; // the output/input resolution ratio; should not be manually calculated because it would yield imprecise results that cause artifacts. should be a uniform but isn't as of now
+
 void main() {
     vec2 src_res = textureSize(u_texture_slot,0);
-    vec2 src_pixel_space_pos = src_res * v_tex_coord;
+    vec2 src_pixel_space_pos = (u_output_resolution / upscaling_factor) * v_tex_coord;
     vec2 out_pos_in_src_pixel = fract(src_pixel_space_pos);
 
     vec4 src_rgba = texture(u_texture_slot, v_tex_coord);
     vec4 src_cmyk = rgb_to_cmyk(src_rgba.rgb);
+    src_cmyk *= color_correction_cmyk;
 
     vec4 color_cmyk = vec4(0,0,0,0);
 
@@ -58,10 +60,7 @@ void main() {
 
         float max_squared_distance = src_cmyk[c] * max_distance * max_distance;
         if (squared_distance < max_squared_distance) {
-            // const int color_resolution = 256; // number of  discrete values allowed for a cmyk component
-            // float quantized_component = floor(src_cmyk[c] * color_resolution + 1) / (color_resolution + 1);
-            float quantized_component = src_cmyk[c]; // skip quantization. to enable it remove this and uncomment above lines
-            color_cmyk[c] = cmyk_luminance * quantized_component;
+            color_cmyk[c] = src_cmyk[c];
         }
     }
 
