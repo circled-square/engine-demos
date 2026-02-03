@@ -34,7 +34,7 @@ const mat4x2 color_component_offsets = mat4x2(
 
 const float max_distance = 1.4;// radius in source pixel space for a dot of a cmyk component of value 1
 
-const vec4 color_correction_cmyk = vec4(1.0, 1.1, 0.95, 1.0);
+const vec4 color_correction_cmyk = vec4(1.0, 1.2, 0.95, 1.0);
 
 float norm_squared(vec2 v);
 vec4 rgb_to_cmyk(vec3 rgb);

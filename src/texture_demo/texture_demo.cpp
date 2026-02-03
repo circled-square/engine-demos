@@ -55,6 +55,7 @@ namespace engine_demos {
 
     struct imgui_tex_script_state_t  {
         using framebuffer_t = gal::framebuffer<std::optional<gal::texture>>;
+
         gal::renderer renderer = gal::renderer();
         gal::vertex_array vao = make_whole_screen_vao();
         gal::shader_program shader = make_shader();

@@ -11,6 +11,7 @@
 #include <engine/utils/format_glm.hpp>
 #include <engine/utils/constants.hpp>
 #include <variant>
+#include <random>
 
 /* This demo demonstrates a few things:
  * - 3d rendering

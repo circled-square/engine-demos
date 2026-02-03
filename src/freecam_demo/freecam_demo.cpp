@@ -124,6 +124,6 @@ namespace engine_demos {
         transparent_viewport_mesh.add_child(std::move(transparent_viewport));
         root.add_child(std::move(transparent_viewport_mesh));
 
-        return engine::scene(scene_name, std::move(root), render_flags_t{}, std::move(to_app));
+        return engine::scene(scene_name, std::move(root), std::move(to_app));
     }
 } // namespace engine_demos

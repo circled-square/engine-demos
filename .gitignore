@@ -3,6 +3,8 @@ build/
 .qtc/
 .qtc_clangd/
 .idea/
+.vscode/
 assets/*.blend1
 CMakeLists.txt.user
 imgui.ini
+compile_commands.json
