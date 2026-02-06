@@ -35,7 +35,7 @@ configure_windows:
 	cmake -DCMAKE_TOOLCHAIN_FILE=./cmake/TC-windows.cmake ${CMAKE_RELEASE_FLAGS} -B build/release_windows
 
 compile_windows:
-	cmake --build build/release_windows/ #-DCMAKE_TOOLCHAIN_FILE=./cmake/TC-windows.cmake
+	cmake --build build/release_windows/
 
 
 configure_debug_clangtidy:

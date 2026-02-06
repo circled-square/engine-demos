@@ -1,6 +1,7 @@
 #include "gltf_demo.hpp"
 
 #include "../imgui_menu_node.hpp"
+#include "engine/resources_manager/resource_concept.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <engine/resources_manager.hpp>
 #include <engine/utils/constants.hpp>
@@ -11,8 +12,15 @@ namespace engine_demos {
     using namespace engine;
 
     scene make_gltf_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
-        node root("");
+        node root = make_gltf_demo_node_tree();
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
+
+        return scene(scene_name, std::move(root));
+    }
+
+
+    node make_gltf_demo_node_tree() {
+        node root("");
 
         rc<const stateless_script> rotate_script = get_rm().new_from(stateless_script {
             .process = [](const node& n, std::any&, application_channel_t& c) {
@@ -20,7 +28,9 @@ namespace engine_demos {
             },
         });
 
-        node castle(get_rm().get_nodetree_from_gltf("assets/castlebl.glb"), "castle");
+        // get_rm().set_default_3d_shader(nullptr);
+        get_rm().set_default_3d_shader(get_rm().load<shader>("shaders/3d/simple.glsl"));
+        node castle(get_rm().load<nodetree_blueprint>("castlebl.glb"), "castle");
 
         node_data::attach_script(castle, std::move(rotate_script));
 
@@ -28,6 +38,6 @@ namespace engine_demos {
 
         root.add_child(node("camera", engine::camera(), glm::translate(glm::mat4(1), glm::vec3(0,50,250))));
 
-        return scene(scene_name, std::move(root));
+        return root;
     }
 } // namespace engine_demos

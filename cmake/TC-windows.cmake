@@ -8,8 +8,10 @@ set(CMAKE_FIND_ROOT_PATH  /usr/x86_64-w64-mingw32/)
 set(CMAKE_C_COMPILER   /bin/x86_64-w64-mingw32-gcc)
 set(CMAKE_CXX_COMPILER /bin/x86_64-w64-mingw32-g++)
 
-# set(WIN32 ON)
-# set(UNIX OFF)
+set(WIN32 ON)
+set(UNIX OFF)
+message(WIN32="${WIN32}")
+message(UNIX="${UNIX}")
 
 # adjust the default behavior of the FIND_XXX() commands:
 # search programs in the host environment
@@ -18,5 +20,3 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 # search headers and libraries in the target environment
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-
-add_compile_options(-static-libgcc -static-libstdc++)

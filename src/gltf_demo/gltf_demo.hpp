@@ -7,6 +7,8 @@
 
 namespace engine_demos {
     engine::scene make_gltf_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name);
+
+    engine::node make_gltf_demo_node_tree();
 }
 
 #endif //GLTF_DEMO_HPP

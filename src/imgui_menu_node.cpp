@@ -34,7 +34,7 @@ namespace engine_demos {
 
                     for(const std::string& name : *s.scene_names) {
                         if(ImGui::Button(name.c_str())) {
-                            c.to_app().scene_to_change_to = get_rm().get_scene(name);
+                            c.to_app().scene_to_change_to = get_rm().load_mut<scene>(name);
                         }
                     }
 

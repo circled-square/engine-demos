@@ -93,21 +93,30 @@ namespace engine_demos {
         rc<const stateless_script> container_script = get_rm().new_from(stateless_script {
             .construct = [](const node& n) {
                 rc<const stateless_script> centre_cube_script = get_rm().new_from(stateless_script {
-                    .process = [](const node& n, std::any&, application_channel_t& app_chan) {
+                    .process = [](const node& n, std::any& state, application_channel_t& app_chan) {
                         n->set_transform(rotate(n->transform(), app_chan.from_app().delta * pi / 8, z_axis + y_axis / 2.f));
 
-                        static float last_delta = 0.f;
+                        //state initialization
+                        if(state.type() != typeid(float)) {
+                            state = (float)0.f;
+                        }
+
+                        EXPECTS(state.type() == typeid(float));
+                        float diff = std::any_cast<float>(state) - app_chan.from_app().delta;
 
                         n->get<mesh>()
                             .primitives()[0].primitive_material
-                            .get_custom_uniforms()[0].second = engine::uniform_value_variant((last_delta - app_chan.from_app().delta) * 200.f);
+                            .get_custom_uniforms()[0].second = engine::uniform_value_variant(diff * 200.f);
 
 
-                        last_delta = app_chan.from_app().delta;
+                        state = (float)app_chan.from_app().delta;
                     },
                 });
                 gal::vertex_array cube_vao = gal::vertex_array::make<vertex_t>(vertex_data, std::span(indices.data(), indices.size()));
-                material cube_material(get_rm().new_from(shader::from_file("assets/shaders/custom_uniform_example.glsl")), get_rm().get_texture("assets/example.png"));
+                material cube_material(
+                    get_rm().load<shader>("shaders/3d/custom_uniform_example.glsl"),
+                    get_rm().load<gal::texture>("example.png")
+                );
                 cube_material.get_custom_uniforms().push_back(std::make_pair(std::string("u_custom"), engine::uniform_value_variant(0.f)));
                 mesh cube(cube_material, get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
 

@@ -14,17 +14,6 @@ namespace engine_demos {
     using namespace engine;
     using glm::mat4; using glm::vec4; using glm::vec3; using glm::vec2;
 
-    static mat4 to_rotation_mat(const mat4& m) {
-        mat4 mat = m;
-        mat[3] = vec4(0);
-        return mat;
-    }
-    static mat4 clear_first_3_rows(const mat4& m) {
-        mat4 mat = m;
-        mat[0] = mat[1] = mat[2] = vec4(0);
-        return mat;
-    }
-
     struct freecam_state  {
         bool up = false, down = false, left = false, right = false, fwd = false, bwd = false, go_faster = false;
         float current_y_rotation = 0.f;
@@ -37,33 +26,24 @@ namespace engine_demos {
 
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
-
-        node halftone_viewport("halftone_vp", engine::viewport(
-            vec2(1./2.)
+        node dither_viewport("dither_vp", engine::viewport(
+            vec2(1./6.)
         ));
 
-        node halftone_viewport_mesh("halftone_vp_mesh", mesh(material(
-            get_rm().new_from<shader>(shader::from_file("assets/shaders/halftone_postfx.glsl")),
-            halftone_viewport->get<viewport>().fbo().get_texture()
-        ), get_rm().get_whole_screen_vao()));
-
-        node transparent_viewport("transparent_vp", engine::viewport(
-            vec2(1./3.)
-        ));
-
-        node transparent_viewport_mesh("transparent_vp_mesh", mesh(material(
-            get_rm().new_from<shader>(shader::from_file("assets/shaders/transparent_postfx.glsl")),
-            transparent_viewport->get<viewport>().fbo().get_texture()
-        ), get_rm().get_whole_screen_vao()));
+        node dither_viewport_mesh("dither_vp_mesh", mesh(material(
+            get_rm().load<shader>("shaders/postfx/dither.glsl"),
+            dither_viewport->get<viewport>().fbo().get_texture()
+        ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
 
         rc<const stateless_script> freecam_script = get_rm().new_from(stateless_script {
             .construct = [](const node&){ return std::any(freecam_state()); },
             .process = [](const node& n, std::any& ss, application_channel_t& app_chan) {
+                rc<node_data> father = n->get_father_checked();
                 freecam_state& s = *std::any_cast<freecam_state>(&ss);
 
                 for(const event_variant_t& event : app_chan.from_app().events) {
                     match_variant(event,
-                    [&s, &app_chan](const key_event_t& e) {
+                    [&s, &app_chan, &father](const key_event_t& e) {
                             using namespace engine::window;
                             if (e.key == key_codes::SPACE) {
                                 s.up = e.action != key_action_codes::RELEASE;
@@ -82,8 +62,13 @@ namespace engine_demos {
                             } else if (e.key == key_codes::C && e.action == key_action_codes::RELEASE) {
                                 //toggle mouse capture
                                 app_chan.to_app().wants_mouse_cursor_captured = !app_chan.from_app().mouse_cursor_is_captured;
+                            } else if (e.key == key_codes::F5 && e.action == key_action_codes::RELEASE) {
+                                // have the resources manager hot-reload the dither shader
+                                get_rm().hot_reload<shader>("shaders/postfx/dither.glsl");
                             }
-                    }, [&s, &n](const mouse_move_event_t& e) {
+                    }, [&s, &app_chan, &n, &father](const mouse_move_event_t& e) {
+                        if(!app_chan.from_app().mouse_cursor_is_captured)
+                            return;
                         vec2 movement = e.movement;
                         constexpr float movement_multiplier = 0.002;
                         movement *= movement_multiplier;
@@ -93,36 +78,33 @@ namespace engine_demos {
                         s.current_y_rotation = std::clamp(s.current_y_rotation, -pi/2.f * 0.99f, pi/2.f * 0.99f);
                         movement.y = s.current_y_rotation - old_rotation;
 
-                        mat4 cam = n->transform();
-
-                        cam = glm::rotate(mat4(1), -movement.x, y_axis) * to_rotation_mat(cam) + clear_first_3_rows(cam);
-                        cam = glm::rotate(cam, -movement.y, x_axis);
-                        n->set_transform(cam);
+                        father->set_transform(glm::rotate(father->transform(), -movement.x, y_axis));
+                        n->set_transform(glm::rotate(n->transform(), -movement.y, x_axis));
                     });
-                    match_variant(event, [](auto){});
                 }
 
                 vec3 movement(
                     (s.right?1:0) - (s.left?1:0),
-                    (s.up?1:0) - (s.down?1:0),
-                    (s.bwd?1:0) - (s.fwd?1:0)
+                    (s.up   ?1:0) - (s.down?1:0),
+                    (s.bwd  ?1:0) - (s.fwd ?1:0)
                 );
                 movement *= s.move_speed * app_chan.from_app().delta * (s.go_faster ? 3.0 : 1.0);
 
-                n->set_transform(glm::translate(n->transform(), movement));
+                father->set_transform(glm::translate(father->transform(), movement));
             },
         });
 
 
+        node camera_father_node("camera_father");
         node camera_node("camera", engine::camera(),
             glm::translate(mat4(1), vec3(0, 2, 0)), std::move(freecam_script));
-
-        halftone_viewport.add_child(std::move(camera_node));
-        halftone_viewport.add_child(node(get_rm().get_nodetree_from_gltf("assets/castlebl.glb")));
-        halftone_viewport_mesh.add_child(std::move(halftone_viewport));
-        transparent_viewport.add_child(std::move(halftone_viewport_mesh));
-        transparent_viewport_mesh.add_child(std::move(transparent_viewport));
-        root.add_child(std::move(transparent_viewport_mesh));
+        
+        camera_father_node.add_child(std::move(camera_node));
+        dither_viewport.add_child(std::move(camera_father_node));
+        get_rm().set_default_3d_shader(get_rm().load<shader>("shaders/3d/light_falloff.glsl"));
+        dither_viewport.add_child(get_rm().load_mut<nodetree_blueprint>("castlebl.glb")->into_node());
+        dither_viewport_mesh.add_child(std::move(dither_viewport));
+        root.add_child(std::move(dither_viewport_mesh));
 
         return engine::scene(scene_name, std::move(root), std::move(to_app));
     }

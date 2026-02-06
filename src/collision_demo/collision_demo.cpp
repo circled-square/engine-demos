@@ -70,7 +70,7 @@ namespace engine_demos {
 
     scene make_collision_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
         gal::vertex_array cube_vao = gal::vertex_array::make<vertex_t>(vertex_data, indices);
-        material cube_material(get_rm().get_retro_3d_shader(), get_rm().get_texture("assets/example.png"));
+        material cube_material(get_rm().load<shader>(internal_resource_name_t::simple_3d_shader), get_rm().load<gal::texture>("example.png"));
 
         mesh cube_mesh(cube_material, get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
 
@@ -130,7 +130,7 @@ namespace engine_demos {
 
             root.add_child(node("camera", camera(), glm::inverse(glm::lookAt(vec3(3,6,6), vec3(0), vec3(0,1,0)))));
 
-            node cone(get_rm().get_nodetree_from_gltf("assets/cone_with_collision.glb"), "cone");
+            node cone(get_rm().load<nodetree_blueprint>("cone_with_collision.glb"), "cone");
             {
                 cone->set_transform(glm::translate(cone->transform(), vec3(2, 0, 0)));
             }

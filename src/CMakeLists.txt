@@ -12,7 +12,7 @@ add_library(gltf_demo STATIC gltf_demo/gltf_demo.cpp)
 target_link_libraries(gltf_demo PRIVATE engine imgui_menu_node)
 
 add_library(postfx_demo STATIC postfx_demo/postfx_demo.cpp)
-target_link_libraries(postfx_demo PRIVATE engine imgui_menu_node)
+target_link_libraries(postfx_demo PRIVATE engine imgui_menu_node gltf_demo)
 
 add_library(freecam_demo STATIC freecam_demo/freecam_demo.cpp)
 target_link_libraries(freecam_demo PRIVATE engine imgui_menu_node)
