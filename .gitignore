@@ -1,4 +1,5 @@
 build/
+install_dir/
 .cache/
 .qtc/
 .qtc_clangd/

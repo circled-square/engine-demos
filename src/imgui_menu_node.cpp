@@ -25,8 +25,10 @@ namespace engine_demos {
     };
 
     node make_imgui_menu_node(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
-        rc<const stateless_script> imgui_menu_script = get_rm().new_from(stateless_script {
+        stateless_script imgui_menu_script { script_vtable {
             .process = [](const node& n, std::any& ss, application_channel_t& c) {
+                ImGui::SetCurrentContext(c.from_app().get_current_imgui_context());
+
                 menu_state_t& s = *std::any_cast<menu_state_t>(&ss);
 
                 if(ImGui::Begin("Scene Menu", NULL, ImGuiWindowFlags_NoFocusOnAppearing)) {
@@ -146,7 +148,7 @@ namespace engine_demos {
                     s.is_first_frame = false;
                 }
             }
-        });
+        }};
 
         std::any menu_state = menu_state_t(std::move(scene_names), std::move(scene_name));
 

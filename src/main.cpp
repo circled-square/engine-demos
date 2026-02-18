@@ -9,8 +9,12 @@
 #include "viewport_demo/viewport_demo.hpp"
 #include "collision_demo/collision_demo.hpp"
 
-
 static engine::rc<engine::scene> get_start_scene();
+
+#ifdef ENGINE_BEING_COMPILED
+#error ENGINE_BEING_COMPILED macro should NOT be defined in translation units outside engine!
+#endif
+
 
 int main() {
     engine::entry_point({1280, 720}, "demo", engine::window::hints{ .maximised = true }, get_start_scene);
@@ -29,7 +33,7 @@ static engine::rc<engine::scene> get_start_scene() {
         { "postfx demo",    engine_demos::make_postfx_demo },
         { "freecam demo",   engine_demos::make_freecam_demo },
         { "viewport demo",  engine_demos::make_viewport_demo },
-        { "collision demo", engine_demos::make_collision_demo }
+        { "collision demo", engine_demos::make_collision_demo },
     };
 
     for (auto& [name, ctor] : constructors) {

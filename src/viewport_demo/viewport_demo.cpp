@@ -75,10 +75,14 @@ namespace engine_demos {
         node transparent_viewport("transparent_vp", engine::viewport(get_rm().new_from(gal::texture::empty({512, 512}, 4))));
 
 
-        node cube_television("cube", mesh(material(
-            get_rm().load<shader>(internal_resource_name_t::simple_3d_shader),
-            transparent_viewport->get<viewport>().fbo().get_texture()
-        ), make_cube_vao()));
+        node cube_television("cube",
+            mesh(material(
+                get_rm().load<shader>(internal_resource_name_t::simple_3d_shader),
+                transparent_viewport->get<viewport>().fbo().get_texture()
+            ), make_cube_vao()),
+            glm::mat4(1),
+            stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "rotate_and_set_clear_color")
+        );
 
         node cam("camera", camera(), glm::inverse(glm::lookAt(vec3(0,1,2), vec3(0,0,0), vec3(0,1,0))));
 
@@ -87,15 +91,6 @@ namespace engine_demos {
         root.add_child(std::move(transparent_viewport));
         root.add_child(std::move(cube_television));
         root.add_child(std::move(cam));
-
-        rc<const stateless_script> cube_script = get_rm().new_from(stateless_script {
-            .process = [](const node& n, std::any&, application_channel_t& c) {
-                c.to_app().clear_color = vec4(0.2, 0.2, 0.2, 1.0);
-                n->set_transform(glm::rotate(n->transform(), c.from_app().delta * pi / 16, y_axis));
-            },
-        });
-        node_data::attach_script(root->get_child("cube"), std::move(cube_script));
-
         return scene(scene_name, std::move(root));
     }
 } // namespace engine_demos

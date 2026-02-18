@@ -28,3 +28,11 @@ target_link_libraries(demos INTERFACE texture_demo 3d_demo gltf_demo postfx_demo
 
 add_executable(main main.cpp)
 target_link_libraries(main PRIVATE engine demos)
+
+set_target_properties(main PROPERTIES
+    INSTALL_RPATH "\${ORIGIN}" #executables under linux do not look for libraries in their same directory by default. this "fixes" that
+)
+
+install(TARGETS main
+    RUNTIME DESTINATION .
+)

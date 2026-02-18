@@ -72,10 +72,12 @@ namespace engine_demos {
 
         root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
 
-        engine::rc<const engine::stateless_script> imgui_tex_script = engine::get_rm().new_from(engine::stateless_script {
+        engine::stateless_script imgui_tex_script { engine::script_vtable {
             .construct = [](const engine::node&) { return std::any(imgui_tex_script_state_t()); },
             .process = [](const engine::node& n, std::any& ss, engine::application_channel_t& c) {
                 imgui_tex_script_state_t& s = *std::any_cast<imgui_tex_script_state_t>(&ss);
+
+                ImGui::SetCurrentContext(c.from_app().get_current_imgui_context());
 
                 ImGui::Begin("Texture Window");
                 {
@@ -92,7 +94,7 @@ namespace engine_demos {
                 {
                     s.fbo.bind();
                     {
-                        glViewport(0, 0, s.fbo.resolution().x, s.fbo.resolution().y);
+                        s.renderer.change_viewport_size(s.fbo.resolution());
                         s.renderer.clear();
 
                         const int texture_slot = 0;
@@ -111,7 +113,7 @@ namespace engine_demos {
                 }
                 ImGui::End();
             }
-        });
+        }};
 
 
         root.add_child(engine::node("imgui-tex-node", std::monostate(), glm::mat4(1), std::move(imgui_tex_script)));

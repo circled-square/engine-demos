@@ -35,7 +35,7 @@ namespace engine_demos {
             dither_viewport->get<viewport>().fbo().get_texture()
         ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
 
-        rc<const stateless_script> freecam_script = get_rm().new_from(stateless_script {
+        stateless_script freecam_script { script_vtable {
             .construct = [](const node&){ return std::any(freecam_state()); },
             .process = [](const node& n, std::any& ss, application_channel_t& app_chan) {
                 rc<node_data> father = n->get_father_checked();
@@ -92,7 +92,7 @@ namespace engine_demos {
 
                 father->set_transform(glm::translate(father->transform(), movement));
             },
-        });
+        }};
 
 
         node camera_father_node("camera_father");

@@ -22,17 +22,10 @@ namespace engine_demos {
     node make_gltf_demo_node_tree() {
         node root("");
 
-        rc<const stateless_script> rotate_script = get_rm().new_from(stateless_script {
-            .process = [](const node& n, std::any&, application_channel_t& c) {
-                n->set_transform(rotate(n->transform(), c.from_app().delta * pi / 16, y_axis));
-            },
-        });
 
-        // get_rm().set_default_3d_shader(nullptr);
-        get_rm().set_default_3d_shader(get_rm().load<shader>("shaders/3d/simple.glsl"));
+        get_rm().set_default_3d_shader(nullptr);
         node castle(get_rm().load<nodetree_blueprint>("castlebl.glb"), "castle");
-
-        node_data::attach_script(castle, std::move(rotate_script));
+        node_data::attach_script(castle, stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "rotate"));
 
         root.add_child(std::move(castle));
 

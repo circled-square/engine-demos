@@ -75,13 +75,13 @@ namespace engine_demos {
         mesh cube_mesh(cube_material, get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
 
 
-        rc<const stateless_script> stillcube_script = get_rm().new_from(stateless_script {
+        stateless_script stillcube_script { script_vtable {
             .process = [](const node& n, std::any&, application_channel_t& app_chan) {
                 n->set_transform(rotate(n->transform(), app_chan.from_app().delta * pi / 8, z_axis + y_axis / 2.f));
             },
-        });
+        }};
 
-        rc<const stateless_script> kbdcube_script = get_rm().new_from(stateless_script{
+        stateless_script kbdcube_script { script_vtable {
             .construct = [](const node&) {
                 return std::any(kbdcube_state());
             },
@@ -115,7 +115,7 @@ namespace engine_demos {
                 } * s.move_speed * app_chan.from_app().delta;
                 n->set_transform(glm::translate(n->transform(), move_vec));
             }
-        });
+        }};
 
         rc<const collision_shape> cube_col_shape = get_rm().new_from(collision_shape::from_mesh(
             stride_span<const vec3>(vertex_data.data(), offsetof(vertex_t, pos), sizeof(vertex_t), vertex_data.size()),
