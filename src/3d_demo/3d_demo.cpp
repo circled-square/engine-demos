@@ -93,23 +93,18 @@ namespace engine_demos {
         stateless_script container_script { script_vtable {
             .construct = [](const node& n) {
                 stateless_script centre_cube_script { script_vtable {
+                    .construct = [](const node&) { return std::any(0.f); },
                     .process = [](const node& n, std::any& state, application_channel_t& app_chan) {
-                        n->set_transform(rotate(n->transform(), app_chan.from_app().delta * pi / 8, z_axis + y_axis / 2.f));
-
-                        //state initialization
-                        if(state.type() != typeid(float)) {
-                            state = (float)0.f;
-                        }
-
                         EXPECTS(state.type() == typeid(float));
-                        float diff = std::any_cast<float>(state) - app_chan.from_app().delta;
+                        float& last_delta = *std::any_cast<float>(&state);
+                        float delta_diff = last_delta - app_chan.from_app().delta;
 
                         n->get<mesh>()
                             .primitives()[0].primitive_material
-                            .get_custom_uniforms()[0].second = engine::uniform_value_variant(diff * 200.f);
+                            .get_custom_uniforms()[0].second = delta_diff * 200.f;
 
 
-                        state = (float)app_chan.from_app().delta;
+                        last_delta = app_chan.from_app().delta;
                     },
                 }};
                 gal::vertex_array cube_vao = gal::vertex_array::make<vertex_t>(vertex_data, std::span(indices.data(), indices.size()));
