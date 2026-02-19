@@ -17,6 +17,8 @@ CMAKE_debug_windows_FLAGS=-DCMAKE_TOOLCHAIN_FILE=./cmake/TC-windows.cmake ${CMAK
 CMAKE_release_windows_FLAGS=-DCMAKE_TOOLCHAIN_FILE=./cmake/TC-windows.cmake ${CMAKE_release_FLAGS}
 CMAKE_clangtidy_FLAGS=-DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=cppcoreguidelines-\*,readability-\*" ${CMAKE_debug_FLAGS}
 
+.NOTPARALLEL: all
+
 #build everything;
 all: build_debug build_release build_debug_windows build_release_windows build_clangtidy
 
