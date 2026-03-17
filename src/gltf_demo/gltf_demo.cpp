@@ -22,7 +22,7 @@ namespace engine_demos {
         node root("");
 
 
-        get_rm().set_default_3d_shader(nullptr);
+        get_rm().set_default_3d_shader(std::nullopt);
         node castle(get_rm().load<nodetree_blueprint>("castlebl.glb"), "castle");
         node_data::attach_script(castle, stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "gltf_demo.rotate"), std::monostate());
 

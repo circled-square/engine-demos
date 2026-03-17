@@ -6,6 +6,7 @@
 #include <engine/scene/application_channel.hpp>
 #include <engine/application/window.hpp>
 #include <engine/scene/renderer/mesh/material/materials.hpp>
+#include <engine/resources_manager/rc.hpp>
 #include <imgui.h>
 #include <queue>
 #include <set>
@@ -163,16 +164,14 @@ namespace imgui_dbgmenu {
                 if(ImGui::CollapsingHeader("Scene Hierarchy")) {
                     ImGui::Indent(16.f);
                     // find root
-                    EXPECTS((engine::rc<engine::node_data>)n);
                     engine::rc<engine::node_data> root = n;
                     while(true) {
                         EXPECTS(root);
-                        engine::rc<engine::node_data> new_root = root->get_father();
+                        engine::nullable_rc<engine::node_data> new_root = root->get_father();
                         if(!new_root)
                             break;
                         else
-                            root = std::move(new_root);
-                        ENSURES(root);
+                            root = new_root.as_nonnull();
                     }
                     ENSURES(root);
                     //dfs
