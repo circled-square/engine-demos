@@ -6,7 +6,7 @@
 #include <forward_list>
 
 namespace engine_demos {
-    engine::scene make_texture_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name);
+    engine::scene make_texture_demo();
 }
 
 #endif //TEXTURE_DEMO_HPP

@@ -1,6 +1,5 @@
 #include "postfx_demo.hpp"
 
-#include "../imgui_menu_node.hpp"
 #include "../gltf_demo/gltf_demo.hpp"
 #include "engine/resources_manager/resource_concept.hpp"
 #include <glm/gtc/matrix_transform.hpp>
@@ -12,12 +11,12 @@
 namespace engine_demos {
     using namespace engine;
 
-    scene make_postfx_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
+    scene make_postfx_demo() {
         node root = make_postfx_demo_node_tree();
 
-        root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
+        root.add_child(node("menu", std::monostate(), glm::mat4(1), stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
 
-        return scene(scene_name, std::move(root));
+        return scene("postfx demo", std::move(root));
     }
 
     node make_postfx_demo_node_tree() {

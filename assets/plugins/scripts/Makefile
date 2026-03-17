@@ -1,5 +1,5 @@
 
-CMAKE_RELEASE_FLAGS=-DCMAKE_BUILD_TYPE=Release -G Ninja -S ./ --log-level=DEBUG
+CMAKE_RELEASE_FLAGS=-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_MESSAGE=LAZY -G Ninja -S ./ --log-level=DEBUG
 
 
 all: 

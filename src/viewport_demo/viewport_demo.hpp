@@ -6,7 +6,7 @@
 #include <engine/scene.hpp>
 
 namespace engine_demos {
-    engine::scene make_viewport_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name);
+    engine::scene make_viewport_demo();
 }
 
 #endif //VIEWPORT_DEMO_HPP

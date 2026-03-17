@@ -1,6 +1,5 @@
 #include "gltf_demo.hpp"
 
-#include "../imgui_menu_node.hpp"
 #include "engine/resources_manager/resource_concept.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <engine/resources_manager.hpp>
@@ -11,11 +10,11 @@
 namespace engine_demos {
     using namespace engine;
 
-    scene make_gltf_demo(std::shared_ptr<std::forward_list<std::string>> scene_names, std::string scene_name) {
+    scene make_gltf_demo() {
         node root = make_gltf_demo_node_tree();
-        root.add_child(make_imgui_menu_node(std::move(scene_names), scene_name));
+        root.add_child(node("menu", std::monostate(), glm::mat4(1), stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
 
-        return scene(scene_name, std::move(root));
+        return scene("gltf demo", std::move(root));
     }
 
 
@@ -25,7 +24,7 @@ namespace engine_demos {
 
         get_rm().set_default_3d_shader(nullptr);
         node castle(get_rm().load<nodetree_blueprint>("castlebl.glb"), "castle");
-        node_data::attach_script(castle, stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "rotate"));
+        node_data::attach_script(castle, stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "gltf_demo.rotate"), std::monostate());
 
         root.add_child(std::move(castle));
 

@@ -22,9 +22,7 @@ int main() {
 
 static engine::rc<engine::scene> get_start_scene() {
     //all scenes need to know the names of all other scenes for imgui_menu_node to work correctly
-    auto names = std::make_shared<std::forward_list<std::string>>();
-
-    using scene_ctor_t = engine::scene(*)(std::shared_ptr<std::forward_list<std::string>>, std::string);
+    using scene_ctor_t = engine::scene(*)();
 
     std::pair<std::string, scene_ctor_t> constructors[] = {
         { "texture demo",   engine_demos::make_texture_demo },
@@ -37,8 +35,7 @@ static engine::rc<engine::scene> get_start_scene() {
     };
 
     for (auto& [name, ctor] : constructors) {
-        names->push_front(name);
-        engine::get_rm().dbg_add_scene_constructor(name, [=](){ return ctor(names, name); });
+        engine::get_rm().dbg_add_scene_constructor(name, ctor);
     }
 
     return engine::get_rm().load_mut<engine::scene>("freecam demo");
