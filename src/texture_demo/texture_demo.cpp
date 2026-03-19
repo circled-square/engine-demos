@@ -13,12 +13,12 @@
 namespace engine_demos {
 
     engine::scene make_texture_demo() {
-        engine::node root("");
+        auto root = engine::node::make("");
 
         engine::rc<const dylib::library> scripts_plugin = engine::get_rm().load<dylib::library>("plugins/scripts/lib/scripts");
 
-        root.add_child(engine::node("menu", std::monostate(), glm::mat4(1), engine::stateless_script::from(scripts_plugin, "imgui_dbgmenu")));
-        root.add_child(engine::node("imgui-tex-node", std::monostate(), glm::mat4(1), engine::stateless_script::from(scripts_plugin, "texture_demo.imgui_windows")));
+        engine::node::add_child(root, engine::node::make("menu", engine::stateless_script::from(scripts_plugin, "imgui_dbgmenu")));
+        engine::node::add_child(root, engine::node::make("imgui-tex-node", engine::stateless_script::from(scripts_plugin, "texture_demo.imgui_windows")));
 
         return engine::scene("texture demo", std::move(root));
     }

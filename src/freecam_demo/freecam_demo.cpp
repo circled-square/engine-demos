@@ -15,31 +15,32 @@ namespace engine_demos {
 
     scene make_freecam_demo() {
         application_channel_t::to_app_t to_app { .wants_mouse_cursor_captured = true };
-        node root("");
+        auto root = node::make("");
+        auto scripts_lib = get_rm().load<dylib::library>("plugins/scripts/lib/scripts");
 
-        root.add_child(node("menu", std::monostate(), glm::mat4(1), stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
+        node::add_child(root, node::make("menu", stateless_script::from(scripts_lib, "imgui_dbgmenu")));
 
-        node dither_viewport("dither_vp", engine::viewport(
-            vec2(1./6.)
-        ));
+        auto dither_viewport = node::make("dither_vp", engine::viewport(vec2(1./6.)));
 
-        node dither_viewport_mesh("dither_vp_mesh", mesh(material(
+        auto dither_viewport_mesh = node::make("dither_vp_mesh", mesh(material(
             get_rm().load<shader>("shaders/postfx/dither.glsl"),
             dither_viewport->get<viewport>().fbo().get_texture()
         ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
 
-        node camera_father_node("camera_father");
-        node camera_node("camera", engine::camera(),
-            glm::translate(mat4(1), vec3(0, 2, 0)),
-            stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "freecam_demo.cam")
+        auto camera_father_node = node::make("camera_father");
+        auto camera_node = node::make("camera",
+            stateless_script::from(scripts_lib, "freecam_demo.cam"),
+            std::monostate(),
+            engine::camera(),
+            glm::translate(mat4(1), vec3(0, 2, 0))
         );
         
-        camera_father_node.add_child(std::move(camera_node));
-        dither_viewport.add_child(std::move(camera_father_node));
+        node::add_child(camera_father_node, std::move(camera_node));
+        node::add_child(dither_viewport, std::move(camera_father_node));
         get_rm().set_default_3d_shader(get_rm().load<shader>("shaders/3d/light_falloff.glsl"));
-        dither_viewport.add_child(get_rm().load_mut<nodetree_blueprint>("castlebl.glb")->into_node());
-        dither_viewport_mesh.add_child(std::move(dither_viewport));
-        root.add_child(std::move(dither_viewport_mesh));
+        node::add_child(dither_viewport, get_rm().load_mut<nodetree_blueprint>("castlebl.glb")->into_node());
+        node::add_child(dither_viewport_mesh, std::move(dither_viewport));
+        node::add_child(root, std::move(dither_viewport_mesh));
 
         return engine::scene("freecam demo", std::move(root), std::move(to_app));
     }

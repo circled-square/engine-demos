@@ -12,40 +12,36 @@ namespace engine_demos {
     using namespace engine;
 
     scene make_postfx_demo() {
-        node root = make_postfx_demo_node_tree();
+        auto root = make_postfx_demo_node_tree();
 
-        root.add_child(node("menu", std::monostate(), glm::mat4(1), stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
+        node::add_child(root, node::make("menu", stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
 
         return scene("postfx demo", std::move(root));
     }
 
-    node make_postfx_demo_node_tree() {
-        node root("");
+    rc<node> make_postfx_demo_node_tree() {
+        auto root = node::make("");
 
-        node halftone_viewport("halftone_vp", engine::viewport(
-            glm::vec2(1./2.)
-        ));
+        auto halftone_viewport = node::make("halftone_vp", engine::viewport(glm::vec2(1./2.)));
 
-        node halftone_viewport_mesh("halftone_vp_mesh", mesh(material(
+        auto halftone_viewport_mesh = node::make("halftone_vp_mesh", mesh(material(
             get_rm().load<shader>("shaders/postfx/halftone.glsl"),
             halftone_viewport->get<viewport>().fbo().get_texture()
         ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
 
-        node transparent_viewport("transparent_vp", engine::viewport(
-            glm::vec2(1./3.)
-        ));
+        auto transparent_viewport = node::make("transparent_vp", engine::viewport(glm::vec2(1./3.)));
 
-        node transparent_viewport_mesh("transparent_vp_mesh", mesh(material(
+        auto transparent_viewport_mesh = node::make("transparent_vp_mesh", mesh(material(
             get_rm().load<shader>("shaders/postfx/transparent.glsl"),
             transparent_viewport->get<viewport>().fbo().get_texture()
         ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
 
 
-        halftone_viewport.add_child(make_gltf_demo_node_tree());
-        halftone_viewport_mesh.add_child(std::move(halftone_viewport));
-        transparent_viewport.add_child(std::move(halftone_viewport_mesh));
-        transparent_viewport_mesh.add_child(std::move(transparent_viewport));
-        root.add_child(std::move(transparent_viewport_mesh));
+        node::add_child(halftone_viewport, make_gltf_demo_node_tree());
+        node::add_child(halftone_viewport_mesh, std::move(halftone_viewport));
+        node::add_child(transparent_viewport, std::move(halftone_viewport_mesh));
+        node::add_child(transparent_viewport_mesh, std::move(transparent_viewport));
+        node::add_child(root, std::move(transparent_viewport_mesh));
 
         return root;
     }

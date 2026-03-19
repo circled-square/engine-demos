@@ -15,6 +15,7 @@
 using namespace engine::constants;
 using engine::get_rm;
 using engine::node;
+using engine::rc;
 
 namespace cube {
     using vertex_t = engine::retro_3d_shader_vertex_t;
@@ -63,7 +64,7 @@ namespace cube {
         {7, 4, 0},
     };
 
-    static engine::rc<const engine::collision_shape> make_col_shape() {
+    static rc<const engine::collision_shape> make_col_shape() {
         return get_rm().new_from(engine::collision_shape::from_mesh(
             engine::stride_span<const glm::vec3>(vertex_data.data(), offsetof(vertex_t, pos), sizeof(vertex_t), vertex_data.size()),
             std::span<const glm::uvec3>(indices.begin(), indices.end()),
@@ -104,8 +105,8 @@ namespace imgui_dbgmenu {
         float max_delta_time_total = 3.f;
     };
     constexpr engine::script_vtable script {
-        .construct = [](const node&, const std::any&) { return std::any(state()); },
-        .process = [](const node& n, std::any& ss, engine::application_channel_t& c) {
+        .construct = [](const rc<node>&, const std::any&) { return std::any(state()); },
+        .process = [](const rc<node>& n, std::any& ss, engine::application_channel_t& c) {
             ImGui::SetCurrentContext(c.from_app().get_current_imgui_context());
 
             state& s = *std::any_cast<state>(&ss);
@@ -164,10 +165,10 @@ namespace imgui_dbgmenu {
                 if(ImGui::CollapsingHeader("Scene Hierarchy")) {
                     ImGui::Indent(16.f);
                     // find root
-                    engine::rc<engine::node_data> root = n;
+                    rc<node> root = n;
                     while(true) {
                         EXPECTS(root);
-                        engine::nullable_rc<engine::node_data> new_root = root->get_father();
+                        engine::nullable_rc<node> new_root = root->get_father();
                         if(!new_root)
                             break;
                         else
@@ -176,7 +177,7 @@ namespace imgui_dbgmenu {
                     ENSURES(root);
                     //dfs
                     struct stack_tuple_t {
-                        engine::rc<engine::node_data> node;
+                        rc<node> n;
                         enum {preorder, postorder} visit_type;
                     };
                     std::vector<stack_tuple_t> dfs_stack;
@@ -195,7 +196,9 @@ namespace imgui_dbgmenu {
                         if(visit_type == stack_tuple_t::preorder) {
                             if(n->children().empty()) {
                                 // this is a leaf (just print the name)
+                                ImGui::Indent(8.f);
                                 ImGui::Text("- %s", n_name.c_str());
+                                ImGui::Unindent(8.f);
                             } else {
                                 // this is not a leaf (print the name in a collapsing header and its children under it)
                                 ImGuiTreeNodeFlags flags = n->children().size() >= 5 ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
@@ -285,8 +288,8 @@ namespace demo_texture {
     };
 
     constexpr engine::script_vtable windows_script {
-        .construct = [](const node&, const std::any&) { return std::any(window_state()); },
-        .process = [](const node& n, std::any& ss, engine::application_channel_t& c) {
+        .construct = [](const rc<node>&, const std::any&) { return std::any(window_state()); },
+        .process = [](const rc<node>& n, std::any& ss, engine::application_channel_t& c) {
             window_state& s = *std::any_cast<window_state>(&ss);
 
             ImGui::SetCurrentContext(c.from_app().get_current_imgui_context());
@@ -334,9 +337,9 @@ namespace demo_freecam {
         float move_speed = 30.0;
     };
     constexpr engine::script_vtable cam_script {
-        .construct = [](const node&, const std::any&){ return std::any(cam_state()); },
-        .process = [](const node& n, std::any& ss, engine::application_channel_t& app_chan) {
-            engine::rc<engine::node_data> father = n->get_father_checked();
+        .construct = [](const rc<node>&, const std::any&){ return std::any(cam_state()); },
+        .process = [](const rc<node>& n, std::any& ss, engine::application_channel_t& app_chan) {
+            rc<node> father = n->get_father_checked();
             cam_state& s = *std::any_cast<cam_state>(&ss);
 
             for(const engine::event_variant_t& event : app_chan.from_app().events) {
@@ -362,7 +365,7 @@ namespace demo_freecam {
                             //toggle mouse capture
                             app_chan.to_app().wants_mouse_cursor_captured = !app_chan.from_app().mouse_cursor_is_captured;
                         } else if (e.key == key_codes::F5 && e.action == key_action_codes::RELEASE) {
-                            // have the resouengine::rces manager hot-reload the dither shader
+                            // have the resources manager hot-reload the dither shader
                             get_rm().hot_reload<engine::shader>("shaders/postfx/dither.glsl");
                         }
                 }, [&s, &app_chan, &n, &father](const engine::mouse_move_event_t& e) {
@@ -394,9 +397,9 @@ namespace demo_freecam {
     };
 }
 namespace demo_3d {
-    constexpr int cube_amount_constant = 5; // n_of_cubes = (cube_amount_constant * 2 + 1) ^ 3
+    constexpr int cube_amount_constant = 10; // n_of_cubes = (cube_amount_constant * 2 + 1) ^ 3
     constexpr float camera_relative_distance = 1.0f;
-    constexpr int nodetree_depth = 0; // number of useless layers to add (useful to artificially make the scene more CPU intensive without making it more GPU intensive)
+    constexpr int nodetree_depth = 2; // number of useless layers to add (useful to artificially make the scene more CPU intensive without making it more GPU intensive)
     constexpr float rand_displacement_amount = 100;
     constexpr float cube_scale = .5f;
 
@@ -405,7 +408,7 @@ namespace demo_3d {
     };
 
     constexpr engine::script_vtable cube_spawner_script {
-        .construct = [](const node& n, const std::any&) {
+        .construct = [](const rc<node>& n, const std::any&) {
             gal::vertex_array cube_vao = cube::make_vao();
             engine::material cube_material(
                 get_rm().load<engine::shader>("shaders/3d/custom_uniform_example.glsl"),
@@ -424,30 +427,33 @@ namespace demo_3d {
                         using glm::vec3;
                         vec3 displacement = vec3{x,y,z} == vec3(0) ? vec3(0) : vec3{x,y,z} + rand_displacement_amount * powf((float)distr(rng), 1.5f) * (vec3{x,y,z} == vec3{0} ? vec3{0} : glm::normalize(vec3{distr(rng), distr(rng), distr(rng)}));
 
-                        node c(
+                        auto c = node::make(
                             std::format("cube_{},{},{}", x, y, z),
                             cube,
                             glm::scale(glm::translate(glm::mat4(1), displacement), glm::vec3(cube_scale))
                         );
 
+
+                        if(glm::uvec3(x,y,z) == glm::uvec3(0))
+                            node::attach_script(c, engine::stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "3d_demo.custom_uniform_example"));
+
                         //artificially increase depth of tree
                         for(int i = 0; i < nodetree_depth; i++) {
-                            node p(c->name());
-                            p.add_child(c);
+                            auto p = node::make(c->name());
+                            node::add_child(p, c);
                             c = p;
                         }
-                        n.add_child(c);
+                        node::add_child(n, c);
                     }
                 }
             }
-            engine::node_data::attach_script(n->get_child("cube_0,0,0"), engine::stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "3d_demo.custom_uniform_example"));
 
             return std::any(std::monostate());
         },
     };
     constexpr engine::script_vtable cam_script {
-        .construct = [](const node&, const std::any&) { return std::any(cam_state()); },
-        .process = [](const node& n, std::any& ss, engine::application_channel_t& app_chan) {
+        .construct = [](const rc<node>&, const std::any&) { return std::any(cam_state()); },
+        .process = [](const rc<node>& n, std::any& ss, engine::application_channel_t& app_chan) {
 
             cam_state& s = *std::any_cast<cam_state>(&ss);
             s.time += app_chan.from_app().delta;
@@ -459,8 +465,8 @@ namespace demo_3d {
         }
     };
     constexpr engine::script_vtable custom_uniform_example_script{
-        .construct = [](const node&, const std::any&) { return std::any(0.f); },
-        .process = [](const node& n, std::any& state, engine::application_channel_t& app_chan) {
+        .construct = [](const rc<node>&, const std::any&) { return std::any(0.f); },
+        .process = [](const rc<node>& n, std::any& state, engine::application_channel_t& app_chan) {
             EXPECTS(state.type() == typeid(float));
             float& last_delta = *std::any_cast<float>(&state);
             float delta_diff = last_delta - app_chan.from_app().delta;
@@ -476,7 +482,7 @@ namespace demo_3d {
 }
 namespace demo_gltf {
     static constexpr engine::script_vtable rotate_script {
-        .process = [](const node& n, std::any&, engine::application_channel_t& c) {
+        .process = [](const rc<node>& n, std::any&, engine::application_channel_t& c) {
             n->set_transform(glm::rotate(n->transform(), c.from_app().delta * pi / 16, y_axis));
         },
     };
@@ -488,24 +494,24 @@ namespace demo_collision {
     };
 
     constexpr engine::script_vtable stillcube_script {
-        .construct = [](const node& self, const std::any&) {
-            self.add_child(node("colshape", cube::make_col_shape()));
+        .construct = [](const rc<node>& self, const std::any&) {
+            node::add_child(self, node::make("colshape", cube::make_col_shape()));
 
             self->set_payload(cube::make_mesh());
 
             return std::any(std::monostate());
         },
-        .process = [](const node& n, std::any&, engine::application_channel_t& app_chan) {
+        .process = [](const rc<node>& n, std::any&, engine::application_channel_t& app_chan) {
             n->set_transform(glm::rotate(n->transform(), app_chan.from_app().delta * pi / 8, z_axis + y_axis / 2.f));
         },
     };
     constexpr engine::script_vtable kbdcube_script {
-        .construct = [](const node& self, const std::any&) {
-            node colshape_node("colshape", cube::make_col_shape());
+        .construct = [](const rc<node>& self, const std::any&) {
+            auto colshape_node = node::make("colshape", cube::make_col_shape());
             colshape_node->set_collision_behaviour(engine::node_collision_behaviour {
                 .passes_events_to_father = true,
             });
-            self.add_child(std::move(colshape_node));
+            node::add_child(self, std::move(colshape_node));
 
             self->set_collision_behaviour(engine::node_collision_behaviour {
                 .moves_away_on_collision = true,
@@ -515,7 +521,7 @@ namespace demo_collision {
 
             return std::any(demo_collision::kbdcube_state());
         },
-        .process = [](const node& n, std::any& state, engine::application_channel_t& app_chan) {
+        .process = [](const rc<node>& n, std::any& state, engine::application_channel_t& app_chan) {
             EXPECTS(state.type() == typeid(demo_collision::kbdcube_state));
             demo_collision::kbdcube_state& s = *std::any_cast<demo_collision::kbdcube_state>(&state);
 
@@ -549,8 +555,8 @@ namespace demo_collision {
 }
 namespace demo_viewport {
     constexpr engine::script_vtable viewport_cube_script {
-        .construct = [](const node& self, const std::any& params) {
-            auto fbo_texture = std::any_cast<engine::rc<gal::texture>>(params);
+        .construct = [](const rc<node>& self, const std::any& params) {
+            auto fbo_texture = std::any_cast<rc<gal::texture>>(params);
             auto shader = engine::get_rm().load<engine::shader>(engine::internal_resource_name_t::simple_3d_shader);
             auto vao = engine::get_rm().new_from(cube::make_vao());
 
@@ -558,7 +564,7 @@ namespace demo_viewport {
 
             return std::any(std::monostate());
         },
-        .process = [](const node& n, std::any&, engine::application_channel_t& c) {
+        .process = [](const rc<node>& n, std::any&, engine::application_channel_t& c) {
             c.to_app().clear_color = glm::vec4(0.2, 0.2, 0.2, 1.0);
             n->set_transform(glm::rotate(n->transform(), c.from_app().delta * pi / 16, y_axis));
         },

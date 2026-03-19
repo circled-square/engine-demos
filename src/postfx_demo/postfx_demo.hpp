@@ -8,7 +8,7 @@
 namespace engine_demos {
     engine::scene make_postfx_demo();
 
-    engine::node make_postfx_demo_node_tree();
+    engine::rc<engine::node> make_postfx_demo_node_tree();
 }
 
 #endif //POSTFX_DEMO_HPP

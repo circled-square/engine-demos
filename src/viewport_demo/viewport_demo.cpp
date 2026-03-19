@@ -14,27 +14,24 @@ namespace engine_demos {
     using namespace engine;
 
     scene make_viewport_demo() {
-        node root("");
+        auto root = node::make("");
+        auto scripts_lib = get_rm().load<dylib::library>("plugins/scripts/lib/scripts");
 
-        root.add_child(node("menu", std::monostate(), glm::mat4(1), stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
-        node transparent_viewport("transparent_vp", engine::viewport(get_rm().new_from(gal::texture::empty({512, 512}, 4))));
+        node::add_child(root, node::make("menu", stateless_script::from(scripts_lib, "imgui_dbgmenu")));
+        auto transparent_viewport = node::make("transparent_vp", engine::viewport(get_rm().new_from(gal::texture::empty({512, 512}, 4))));
 
 
-        node cube_television("cube",
-            std::monostate(),
-            glm::mat4(1),
-            stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "viewport_demo.viewport_cube"),
-            transparent_viewport->get<viewport>().fbo().get_texture()
-        );
+        auto vp_texture = transparent_viewport->get<viewport>().fbo().get_texture();
+        auto cube_television = node::make("cube", stateless_script::from(scripts_lib, "viewport_demo.viewport_cube"), vp_texture);
 
         using glm::vec3;
-        node cam("camera", camera(), glm::inverse(glm::lookAt(vec3(0,1,2), vec3(0,0,0), vec3(0,1,0))));
+        auto cam = node::make("camera", camera(), glm::inverse(glm::lookAt(vec3(0,1,2), vec3(0,0,0), vec3(0,1,0))));
 
-        transparent_viewport.add_child(make_postfx_demo_node_tree());
+        node::add_child(transparent_viewport, make_postfx_demo_node_tree());
         //the viewport does not have to be child of the mesh which shows its texture (though it's tidier, in my opinion)
-        root.add_child(std::move(transparent_viewport));
-        root.add_child(std::move(cube_television));
-        root.add_child(std::move(cam));
+        node::add_child(root, std::move(transparent_viewport));
+        node::add_child(root, std::move(cube_television));
+        node::add_child(root, std::move(cam));
         return scene("viewport demo", std::move(root));
     }
 } // namespace engine_demos

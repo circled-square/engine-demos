@@ -11,24 +11,24 @@ namespace engine_demos {
     using namespace engine;
 
     scene make_gltf_demo() {
-        node root = make_gltf_demo_node_tree();
-        root.add_child(node("menu", std::monostate(), glm::mat4(1), stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
+        auto root = make_gltf_demo_node_tree();
+        node::add_child(root, node::make("menu", stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
 
         return scene("gltf demo", std::move(root));
     }
 
 
-    node make_gltf_demo_node_tree() {
-        node root("");
+    rc<node> make_gltf_demo_node_tree() {
+        auto root = node::make("");
 
 
         get_rm().set_default_3d_shader(std::nullopt);
-        node castle(get_rm().load<nodetree_blueprint>("castlebl.glb"), "castle");
-        node_data::attach_script(castle, stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "gltf_demo.rotate"), std::monostate());
+        auto castle = node::deep_copy(get_rm().load<nodetree_blueprint>("castlebl.glb"), "castle");
+        node::attach_script(castle, stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "gltf_demo.rotate"), std::monostate());
 
-        root.add_child(std::move(castle));
+        node::add_child(root, std::move(castle));
 
-        root.add_child(node("camera", engine::camera(), glm::translate(glm::mat4(1), glm::vec3(0,50,250))));
+        node::add_child(root, node::make("camera", engine::camera(), glm::translate(glm::mat4(1), glm::vec3(0,50,250))));
 
         return root;
     }

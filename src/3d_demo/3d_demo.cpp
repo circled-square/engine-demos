@@ -26,13 +26,13 @@ namespace engine_demos {
     using namespace engine;
     using glm::mat4; using glm::uvec3; using glm::vec3;
     scene make_3d_demo() {
-        node root("");
+        auto root = node::make("");
 
         rc<const dylib::library> scripts_plugin = get_rm().load<dylib::library>("plugins/scripts/lib/scripts");
 
-        root.add_child(node("menu", std::monostate(), glm::mat4(1), stateless_script::from(scripts_plugin, "imgui_dbgmenu")));
-        root.add_child(node("cubes_container", std::monostate(), mat4(1), stateless_script::from(scripts_plugin, "3d_demo.cube_spawner")));
-        root.add_child(node("camera", camera(), glm::translate(mat4(1), vec3(0,0,4)), stateless_script::from(scripts_plugin, "3d_demo.cam")));
+        node::add_child(root, node::make("menu", stateless_script::from(scripts_plugin, "imgui_dbgmenu")));
+        node::add_child(root, node::make("cubes_container", stateless_script::from(scripts_plugin, "3d_demo.cube_spawner")));
+        node::add_child(root, node::make("camera", stateless_script::from(scripts_plugin, "3d_demo.cam"), std::monostate(), camera(), glm::translate(mat4(1), vec3(0,0,4))));
 
         return scene("3d demo", std::move(root));
     }

@@ -8,7 +8,7 @@
 namespace engine_demos {
     engine::scene make_gltf_demo();
 
-    engine::node make_gltf_demo_node_tree();
+    engine::rc<engine::node> make_gltf_demo_node_tree();
 }
 
 #endif //GLTF_DEMO_HPP

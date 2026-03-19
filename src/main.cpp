@@ -38,5 +38,5 @@ static engine::rc<engine::scene> get_start_scene() {
         engine::get_rm().dbg_add_scene_constructor(name, ctor);
     }
 
-    return engine::get_rm().load_mut<engine::scene>("freecam demo");
+    return engine::get_rm().load_mut<engine::scene>("3d demo");
 }
