@@ -6,6 +6,7 @@ enable_testing()
 project(engine-demo VERSION 0.1.0 LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+add_compile_options(-ffast-math)
 
 add_subdirectory(src/)
 add_subdirectory(deps/)

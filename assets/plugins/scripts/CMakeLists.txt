@@ -31,11 +31,15 @@ add_compile_definitions(GAL_AS_SHARED_LIB)
 add_library(scripts SHARED scripts.cpp)
 target_link_libraries(scripts PRIVATE engine)
 set_target_properties(scripts PROPERTIES
-    PREFIX ""
     IMPORT_PREFIX ""
 
     POSITION_INDEPENDENT_CODE ON
 )
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set_target_properties(scripts PROPERTIES PREFIX "dbgsym_")
+else()
+    set_target_properties(scripts PROPERTIES PREFIX "")
+endif()
 
 install(TARGETS scripts
     LIBRARY DESTINATION lib/

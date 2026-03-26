@@ -7,6 +7,8 @@
 #include <engine/application/window.hpp>
 #include <engine/scene/renderer/mesh/material/materials.hpp>
 #include <engine/resources_manager/rc.hpp>
+#include <engine/utils/format_glm.hpp>
+#include <engine/utils/lin_algebra.hpp>
 #include <imgui.h>
 #include <queue>
 #include <set>
@@ -105,8 +107,8 @@ namespace imgui_dbgmenu {
         float max_delta_time_total = 3.f;
     };
     constexpr engine::script_vtable script {
-        .construct = [](const rc<node>&, const std::any&) { return std::any(state()); },
-        .process = [](const rc<node>& n, std::any& ss, engine::application_channel_t& c) {
+        .construct = [](node&, const std::any&) { return std::any(state()); },
+        .process = [](node& n, std::any& ss, engine::application_channel_t& c) {
             ImGui::SetCurrentContext(c.from_app().get_current_imgui_context());
 
             state& s = *std::any_cast<state>(&ss);
@@ -165,19 +167,19 @@ namespace imgui_dbgmenu {
                 if(ImGui::CollapsingHeader("Scene Hierarchy")) {
                     ImGui::Indent(16.f);
                     // find root
-                    rc<node> root = n;
+                    node* root = &n;
                     while(true) {
                         EXPECTS(root);
-                        engine::nullable_rc<node> new_root = root->get_father();
+                        node* new_root = root->get_father();
                         if(!new_root)
                             break;
                         else
-                            root = new_root.as_nonnull();
+                            root = new_root;
                     }
                     ENSURES(root);
                     //dfs
                     struct stack_tuple_t {
-                        rc<node> n;
+                        node* n;
                         enum {preorder, postorder} visit_type;
                     };
                     std::vector<stack_tuple_t> dfs_stack;
@@ -193,21 +195,35 @@ namespace imgui_dbgmenu {
                             n_name = std::format("(root) {}", n->name());
                         }
 
+
+                        const char* name = n_name.empty() ? "(empty name)" : n_name.c_str();
+                        std::string tooltip_contents = std::format("{}", engine::extract_position(n->transform()));
+
+
                         if(visit_type == stack_tuple_t::preorder) {
                             if(n->children().empty()) {
                                 // this is a leaf (just print the name)
                                 ImGui::Indent(8.f);
-                                ImGui::Text("- %s", n_name.c_str());
+                                ImGui::Text("- %s", name);
+
+                                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                                    ImGui::SetTooltip(tooltip_contents.c_str());
+
                                 ImGui::Unindent(8.f);
                             } else {
                                 // this is not a leaf (print the name in a collapsing header and its children under it)
                                 ImGuiTreeNodeFlags flags = n->children().size() >= 5 ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
-                                if(ImGui::CollapsingHeader(n_name.c_str(), flags)) {
+                                std::string imgui_id = std::format("{}##{}", name, (void*)n);
+                                bool collapsing_header_uncollapsed = ImGui::CollapsingHeader(imgui_id.c_str(), flags);
+                                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                                    ImGui::SetTooltip(tooltip_contents.c_str());
+
+                                if(collapsing_header_uncollapsed) {
                                     ImGui::Indent(8.f);
                                     dfs_stack.push_back({n, stack_tuple_t::postorder});
 
                                     for(std::int64_t i = n->children().size()-1; i >= 0; i--)
-                                        dfs_stack.push_back({ n->children()[i], stack_tuple_t::preorder });
+                                        dfs_stack.push_back({ &n->children()[i], stack_tuple_t::preorder });
                                 }
                             }
                         } else {
@@ -288,8 +304,8 @@ namespace demo_texture {
     };
 
     constexpr engine::script_vtable windows_script {
-        .construct = [](const rc<node>&, const std::any&) { return std::any(window_state()); },
-        .process = [](const rc<node>& n, std::any& ss, engine::application_channel_t& c) {
+        .construct = [](node&, const std::any&) { return std::any(window_state()); },
+        .process = [](node& n, std::any& ss, engine::application_channel_t& c) {
             window_state& s = *std::any_cast<window_state>(&ss);
 
             ImGui::SetCurrentContext(c.from_app().get_current_imgui_context());
@@ -337,9 +353,9 @@ namespace demo_freecam {
         float move_speed = 30.0;
     };
     constexpr engine::script_vtable cam_script {
-        .construct = [](const rc<node>&, const std::any&){ return std::any(cam_state()); },
-        .process = [](const rc<node>& n, std::any& ss, engine::application_channel_t& app_chan) {
-            rc<node> father = n->get_father_checked();
+        .construct = [](node&, const std::any&){ return std::any(cam_state()); },
+        .process = [](node& n, std::any& ss, engine::application_channel_t& app_chan) {
+            node& father = n.get_father_checked();
             cam_state& s = *std::any_cast<cam_state>(&ss);
 
             for(const engine::event_variant_t& event : app_chan.from_app().events) {
@@ -380,8 +396,8 @@ namespace demo_freecam {
                     s.current_y_rotation = std::clamp(s.current_y_rotation, -pi/2.f * 0.99f, pi/2.f * 0.99f);
                     movement.y = s.current_y_rotation - old_rotation;
 
-                    father->set_transform(glm::rotate(father->transform(), -movement.x, y_axis));
-                    n->set_transform(glm::rotate(n->transform(), -movement.y, x_axis));
+                    father.set_transform(glm::rotate(father.transform(), -movement.x, y_axis));
+                    n.set_transform(glm::rotate(n.transform(), -movement.y, x_axis));
                 });
             }
 
@@ -392,7 +408,7 @@ namespace demo_freecam {
             );
             movement *= s.move_speed * app_chan.from_app().delta * (s.go_faster ? 3.0 : 1.0);
 
-            father->set_transform(glm::translate(father->transform(), movement));
+            father.set_transform(glm::translate(father.transform(), movement));
         },
     };
 }
@@ -408,14 +424,15 @@ namespace demo_3d {
     };
 
     constexpr engine::script_vtable cube_spawner_script {
-        .construct = [](const rc<node>& n, const std::any&) {
+        .construct = [](node& n, const std::any&) {
             gal::vertex_array cube_vao = cube::make_vao();
             engine::material cube_material(
                 get_rm().load<engine::shader>("shaders/3d/custom_uniform_example.glsl"),
                 get_rm().load<gal::texture>("example.png")
             );
             cube_material.get_custom_uniforms().push_back(std::make_pair(std::string("u_custom"), engine::uniform_value_variant(0.f)));
-            engine::mesh cube(cube_material, get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
+            // *cube_material.get_shader();
+            engine::mesh cube(std::move(cube_material), get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
 
             constexpr int k = cube_amount_constant;
             std::minstd_rand rng((std::random_device()()));
@@ -435,15 +452,15 @@ namespace demo_3d {
 
 
                         if(glm::uvec3(x,y,z) == glm::uvec3(0))
-                            node::attach_script(c, engine::stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "3d_demo.custom_uniform_example"));
+                            node::attach_script(*c, engine::stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "3d_demo.custom_uniform_example"));
 
                         //artificially increase depth of tree
                         for(int i = 0; i < nodetree_depth; i++) {
                             auto p = node::make(c->name());
-                            node::add_child(p, c);
-                            c = p;
+                            node::add_child(*p, std::move(c));
+                            c = std::move(p);
                         }
-                        node::add_child(n, c);
+                        node::add_child(n, std::move(c));
                     }
                 }
             }
@@ -452,8 +469,8 @@ namespace demo_3d {
         },
     };
     constexpr engine::script_vtable cam_script {
-        .construct = [](const rc<node>&, const std::any&) { return std::any(cam_state()); },
-        .process = [](const rc<node>& n, std::any& ss, engine::application_channel_t& app_chan) {
+        .construct = [](node&, const std::any&) { return std::any(cam_state()); },
+        .process = [](node& n, std::any& ss, engine::application_channel_t& app_chan) {
 
             cam_state& s = *std::any_cast<cam_state>(&ss);
             s.time += app_chan.from_app().delta;
@@ -461,17 +478,17 @@ namespace demo_3d {
             float distance = cube_amount_constant * camera_relative_distance;
             glm::vec3 pos = distance * glm::vec3{ sin(s.time), sin(s.time), cos(s.time) };
 
-            n->set_transform(glm::inverse(glm::lookAt(pos, glm::vec3(0), glm::vec3(0,1,0))));
+            n.set_transform(glm::inverse(glm::lookAt(pos, glm::vec3(0), glm::vec3(0,1,0))));
         }
     };
     constexpr engine::script_vtable custom_uniform_example_script{
-        .construct = [](const rc<node>&, const std::any&) { return std::any(0.f); },
-        .process = [](const rc<node>& n, std::any& state, engine::application_channel_t& app_chan) {
+        .construct = [](node&, const std::any&) { return std::any(0.f); },
+        .process = [](node& n, std::any& state, engine::application_channel_t& app_chan) {
             EXPECTS(state.type() == typeid(float));
             float& last_delta = *std::any_cast<float>(&state);
             float delta_diff = last_delta - app_chan.from_app().delta;
 
-            n->get<engine::mesh>()
+            n.get<engine::mesh>()
                 .primitives()[0].primitive_material
                 .get_custom_uniforms()[0].second = delta_diff * 200.f;
 
@@ -482,8 +499,8 @@ namespace demo_3d {
 }
 namespace demo_gltf {
     static constexpr engine::script_vtable rotate_script {
-        .process = [](const rc<node>& n, std::any&, engine::application_channel_t& c) {
-            n->set_transform(glm::rotate(n->transform(), c.from_app().delta * pi / 16, y_axis));
+        .process = [](node& n, std::any&, engine::application_channel_t& c) {
+            n.set_transform(glm::rotate(n.transform(), c.from_app().delta * pi / 16, y_axis));
         },
     };
 }
@@ -494,34 +511,34 @@ namespace demo_collision {
     };
 
     constexpr engine::script_vtable stillcube_script {
-        .construct = [](const rc<node>& self, const std::any&) {
+        .construct = [](node& self, const std::any&) {
             node::add_child(self, node::make("colshape", cube::make_col_shape()));
 
-            self->set_payload(cube::make_mesh());
+            self.set_payload(cube::make_mesh());
 
             return std::any(std::monostate());
         },
-        .process = [](const rc<node>& n, std::any&, engine::application_channel_t& app_chan) {
-            n->set_transform(glm::rotate(n->transform(), app_chan.from_app().delta * pi / 8, z_axis + y_axis / 2.f));
+        .process = [](node& n, std::any&, engine::application_channel_t& app_chan) {
+            n.set_transform(glm::rotate(n.transform(), app_chan.from_app().delta * pi / 8, z_axis + y_axis / 2.f));
         },
     };
     constexpr engine::script_vtable kbdcube_script {
-        .construct = [](const rc<node>& self, const std::any&) {
+        .construct = [](node& self, const std::any&) {
             auto colshape_node = node::make("colshape", cube::make_col_shape());
             colshape_node->set_collision_behaviour(engine::node_collision_behaviour {
                 .passes_events_to_father = true,
             });
             node::add_child(self, std::move(colshape_node));
 
-            self->set_collision_behaviour(engine::node_collision_behaviour {
+            self.set_collision_behaviour(engine::node_collision_behaviour {
                 .moves_away_on_collision = true,
             });
 
-            self->set_payload(cube::make_mesh());
+            self.set_payload(cube::make_mesh());
 
             return std::any(demo_collision::kbdcube_state());
         },
-        .process = [](const rc<node>& n, std::any& state, engine::application_channel_t& app_chan) {
+        .process = [](node& n, std::any& state, engine::application_channel_t& app_chan) {
             EXPECTS(state.type() == typeid(demo_collision::kbdcube_state));
             demo_collision::kbdcube_state& s = *std::any_cast<demo_collision::kbdcube_state>(&state);
 
@@ -549,24 +566,24 @@ namespace demo_collision {
                 (int)s.up    - (int)s.down,
                 (int)s.bwd   - (int)s.fwd,
             } * s.move_speed * app_chan.from_app().delta;
-            n->set_transform(glm::translate(n->transform(), move_vec));
+            n.set_transform(glm::translate(n.transform(), move_vec));
         }
     };
 }
 namespace demo_viewport {
     constexpr engine::script_vtable viewport_cube_script {
-        .construct = [](const rc<node>& self, const std::any& params) {
+        .construct = [](node& self, const std::any& params) {
             auto fbo_texture = std::any_cast<rc<gal::texture>>(params);
             auto shader = engine::get_rm().load<engine::shader>(engine::internal_resource_name_t::simple_3d_shader);
             auto vao = engine::get_rm().new_from(cube::make_vao());
 
-            self->set_payload(engine::mesh(engine::material(shader, fbo_texture), vao));
+            self.set_payload(engine::mesh(engine::material(shader, fbo_texture), vao));
 
             return std::any(std::monostate());
         },
-        .process = [](const rc<node>& n, std::any&, engine::application_channel_t& c) {
+        .process = [](node& n, std::any&, engine::application_channel_t& c) {
             c.to_app().clear_color = glm::vec4(0.2, 0.2, 0.2, 1.0);
-            n->set_transform(glm::rotate(n->transform(), c.from_app().delta * pi / 16, y_axis));
+            n.set_transform(glm::rotate(n.transform(), c.from_app().delta * pi / 16, y_axis));
         },
     };
 }
