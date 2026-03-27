@@ -12,12 +12,12 @@ CMAKE_FLAGS=-DCMAKE_INSTALL_MESSAGE=LAZY -G ${GENERATOR} -S ./
 
 # flags for configuration of the various targets
 CMAKE_debug_FLAGS=-DCMAKE_BUILD_TYPE=Debug ${CMAKE_FLAGS} --log-level=DEBUG
-CMAKE_release_FLAGS=-DCMAKE_BUILD_TYPE=Release ${CMAKE_FLAGS} --log-level=TRACE
+CMAKE_release_FLAGS=-DCMAKE_BUILD_TYPE=Release ${CMAKE_FLAGS} --log-level=NOTICE
 CMAKE_debug_windows_FLAGS=-DCMAKE_TOOLCHAIN_FILE=./cmake/TC-windows.cmake ${CMAKE_debug_FLAGS}
 CMAKE_release_windows_FLAGS=-DCMAKE_TOOLCHAIN_FILE=./cmake/TC-windows.cmake ${CMAKE_release_FLAGS}
 CMAKE_clangtidy_FLAGS=-DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=cppcoreguidelines-\*,readability-\*" ${CMAKE_debug_FLAGS}
 
-.NOTPARALLEL: all
+.NOTPARALLEL: all run_tests
 
 #build everything;
 all: build_debug build_release build_debug_windows build_release_windows build_clangtidy
@@ -34,9 +34,11 @@ run_%:
 	make build_$*
 	install_dir/$*/main*
 
-run_tests: build_debug build_release
+run_tests: build_debug build_release build_debug_windows build_release_windows
 	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/debug run_engine_tests
 	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/release run_engine_tests
+	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/debug_windows run_engine_tests
+	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/release_windows run_engine_tests
 
 clean:
 	rm -rf build/* install_dir/*

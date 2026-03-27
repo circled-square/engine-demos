@@ -452,15 +452,15 @@ namespace demo_3d {
 
 
                         if(glm::uvec3(x,y,z) == glm::uvec3(0))
-                            node::attach_script(*c, engine::stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "3d_demo.custom_uniform_example"));
+                            c->attach_script(engine::stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "3d_demo.custom_uniform_example"));
 
                         //artificially increase depth of tree
                         for(int i = 0; i < nodetree_depth; i++) {
                             auto p = node::make(c->name());
-                            node::add_child(*p, std::move(c));
+                            p->add_child(std::move(c));
                             c = std::move(p);
                         }
-                        node::add_child(n, std::move(c));
+                        n.add_child(std::move(c));
                     }
                 }
             }
@@ -512,7 +512,7 @@ namespace demo_collision {
 
     constexpr engine::script_vtable stillcube_script {
         .construct = [](node& self, const std::any&) {
-            node::add_child(self, node::make("colshape", cube::make_col_shape()));
+            self.add_child(node::make("colshape", cube::make_col_shape()));
 
             self.set_payload(cube::make_mesh());
 
@@ -528,7 +528,7 @@ namespace demo_collision {
             colshape_node->set_collision_behaviour(engine::node_collision_behaviour {
                 .passes_events_to_father = true,
             });
-            node::add_child(self, std::move(colshape_node));
+            self.add_child(std::move(colshape_node));
 
             self.set_collision_behaviour(engine::node_collision_behaviour {
                 .moves_away_on_collision = true,

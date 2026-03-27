@@ -17,8 +17,8 @@ namespace engine_demos {
 
         engine::rc<const dylib::library> scripts_plugin = engine::get_rm().load<dylib::library>("plugins/scripts/lib/scripts");
 
-        engine::node::add_child(*root, engine::node::make("menu", engine::stateless_script::from(scripts_plugin, "imgui_dbgmenu")));
-        engine::node::add_child(*root, engine::node::make("imgui-tex-node", engine::stateless_script::from(scripts_plugin, "texture_demo.imgui_windows")));
+        root->add_child(engine::node::make("menu", engine::stateless_script::from(scripts_plugin, "imgui_dbgmenu")));
+        root->add_child(engine::node::make("imgui-tex-node", engine::stateless_script::from(scripts_plugin, "texture_demo.imgui_windows")));
 
         return engine::scene("texture demo", std::move(root));
     }

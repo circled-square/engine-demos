@@ -30,9 +30,9 @@ namespace engine_demos {
 
         rc<const dylib::library> scripts_plugin = get_rm().load<dylib::library>("plugins/scripts/lib/scripts");
 
-        node::add_child(*root, node::make("menu", stateless_script::from(scripts_plugin, "imgui_dbgmenu")));
-        node::add_child(*root, node::make("cubes_container", stateless_script::from(scripts_plugin, "3d_demo.cube_spawner")));
-        node::add_child(*root, node::make("camera", stateless_script::from(scripts_plugin, "3d_demo.cam"), std::monostate(), camera(), glm::translate(mat4(1), vec3(0,0,4))));
+        root->add_child(node::make("menu", stateless_script::from(scripts_plugin, "imgui_dbgmenu")));
+        root->add_child(node::make("cubes_container", stateless_script::from(scripts_plugin, "3d_demo.cube_spawner")));
+        root->add_child(node::make("camera", stateless_script::from(scripts_plugin, "3d_demo.cam"), std::monostate(), camera(), glm::translate(mat4(1), vec3(0,0,4))));
 
         return scene("3d demo", std::move(root));
     }

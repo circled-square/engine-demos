@@ -14,7 +14,7 @@ namespace engine_demos {
     scene make_postfx_demo() {
         auto root = make_postfx_demo_node_tree();
 
-        node::add_child(*root, node::make("menu", stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
+        root->add_child(node::make("menu", stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
 
         return scene("postfx demo", std::move(root));
     }
@@ -37,11 +37,11 @@ namespace engine_demos {
         ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
 
 
-        node::add_child(*halftone_viewport, make_gltf_demo_node_tree());
-        node::add_child(*halftone_viewport_mesh, std::move(halftone_viewport));
-        node::add_child(*transparent_viewport, std::move(halftone_viewport_mesh));
-        node::add_child(*transparent_viewport_mesh, std::move(transparent_viewport));
-        node::add_child(*root, std::move(transparent_viewport_mesh));
+        halftone_viewport->add_child(make_gltf_demo_node_tree());
+        halftone_viewport_mesh->add_child(std::move(halftone_viewport));
+        transparent_viewport->add_child(std::move(halftone_viewport_mesh));
+        transparent_viewport_mesh->add_child(std::move(transparent_viewport));
+        root->add_child(std::move(transparent_viewport_mesh));
 
         return root;
     }

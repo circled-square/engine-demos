@@ -19,18 +19,18 @@ namespace engine_demos {
 
         auto root = node::make("");
         {
-            node::add_child(*root, node::make("menu", stateless_script::from(scripts_plugin, "imgui_dbgmenu")));
-            node::add_child(*root, node::make("camera", camera(), glm::inverse(glm::lookAt(vec3(3,6,6), vec3(0), vec3(0,1,0)))));
+            root->add_child(node::make("menu", stateless_script::from(scripts_plugin, "imgui_dbgmenu")));
+            root->add_child(node::make("camera", camera(), glm::inverse(glm::lookAt(vec3(3,6,6), vec3(0), vec3(0,1,0)))));
 
             auto cone = node::deep_copy(get_rm().load<nodetree_blueprint>("cone_with_collision.glb"), "cone");
             cone->set_transform(glm::translate(cone->transform(), vec3(2, 0, 0)));
-            node::add_child(*root, std::move(cone));
+            root->add_child(std::move(cone));
 
             auto stillcube = node::make("stillcube", stateless_script::from(scripts_plugin, "collision_demo.stillcube"));
-            node::add_child(*root, std::move(stillcube));
+            root->add_child(std::move(stillcube));
 
             auto kbdcube = node::make("kbdcube", stateless_script::from(scripts_plugin, "collision_demo.kbdcube"));
-            node::add_child(*root, std::move(kbdcube));
+            root->add_child(std::move(kbdcube));
         }
 
 

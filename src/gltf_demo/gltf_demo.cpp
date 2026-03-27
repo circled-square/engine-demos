@@ -12,7 +12,7 @@ namespace engine_demos {
 
     scene make_gltf_demo() {
         auto root = make_gltf_demo_node_tree();
-        node::add_child(*root, node::make("menu", stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
+        root->add_child(node::make("menu", stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
 
         return scene("gltf demo", std::move(root));
     }
@@ -24,11 +24,11 @@ namespace engine_demos {
 
         get_rm().set_default_3d_shader(std::nullopt);
         auto castle = node::deep_copy(get_rm().load<nodetree_blueprint>("castlebl.glb"), "castle");
-        node::attach_script(*castle, stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "gltf_demo.rotate"), std::monostate());
+        castle->attach_script(stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "gltf_demo.rotate"), std::monostate());
 
-        node::add_child(*root, std::move(castle));
+        root->add_child(std::move(castle));
 
-        node::add_child(*root, node::make("camera", engine::camera(), glm::translate(glm::mat4(1), glm::vec3(0,50,250))));
+        root->add_child(node::make("camera", engine::camera(), glm::translate(glm::mat4(1), glm::vec3(0,50,250))));
 
         return root;
     }
