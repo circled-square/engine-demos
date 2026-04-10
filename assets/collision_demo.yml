@@ -1,0 +1,21 @@
+scene:
+  # name: collision_demo #does it even make sense to define this instead of just using the filename? for now we just use the filename
+  # onload_script: plugins/scripts/lib/scripts:init_collision_demo
+  root:
+    children:
+    - name: imgui_menu
+      script: plugins/scripts/lib/scripts:imgui_dbgmenu
+    - name: camera
+      payload: { type: camera }
+      transform: { position: [3,6,6], look_at: { center: [0,0,0], up: [0,1,0] } }
+    - name: cone
+      load: cone_with_collision.glb
+      transform: { position: [2,0,0] }
+    - name: kbdcube
+      script: plugins/scripts/lib/scripts:collision_demo.kbdcube
+      # load: assets/cube_with_collision.glb
+      collision_behaviour: { moves_away: true }
+      transform: { position: [0,1,0] }
+    - name: stillcube
+      script: plugins/scripts/lib/scripts:collision_demo.stillcube
+      # load: assets/cube_with_collision.glb

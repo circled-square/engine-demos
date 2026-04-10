@@ -96,7 +96,7 @@ namespace imgui_dbgmenu {
             "postfx demo",
             "freecam demo",
             "viewport demo",
-            "collision demo",
+            "collision_demo.yml",
         };
 
         std::queue<float> delta_time_hist;
