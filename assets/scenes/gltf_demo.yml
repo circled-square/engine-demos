@@ -1,0 +1,41 @@
+
+# This is a simple 3d rendered demo showing gltf importing in action
+
+##namespace engine_demos {
+##    scene make_gltf_demo() {
+##        auto root = make_gltf_demo_node_tree();
+##        root->add_child(node::make("menu", stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
+##
+##        return scene("gltf demo", std::move(root));
+##    }
+##
+##
+##    std::unique_ptr<node> make_gltf_demo_node_tree() {
+##        auto root = node::make("");
+##
+##
+##        get_rm().set_default_3d_shader(std::nullopt);
+##        auto castle = node::deep_copy(get_rm().load<nodetree_blueprint>("castlebl.glb"), "castle");
+##        castle->attach_script(stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "gltf_demo.rotate"), std::monostate());
+##
+##        root->add_child(std::move(castle));
+##
+##        root->add_child(node::make("camera", engine::camera(), glm::translate(glm::mat4(1), glm::vec3(0,50,250))));
+##
+##        return root;
+##    }
+##} // namespace engine_demos
+
+scene:
+  # name: collision_demo #does it even make sense to define this instead of just using the filename? for now we just use the filename
+  # onload_script: plugins/scripts/lib/scripts:init_collision_demo
+  root:
+    children:
+    - name: imgui_menu
+      script: plugins/scripts/lib/scripts:imgui_dbgmenu
+    - name: camera
+      payload: { type: camera }
+      transform: { position: [0,50,250] , look_at: { center: [0,50,0], up: [0,1,0] } } # look_at could have been omitted as that is the direction the camera would have defaulted to anyway
+    - name: cone
+      load: castlebl.glb
+      script: plugins/scripts/lib/scripts:gltf_demo.rotate

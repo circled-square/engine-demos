@@ -1,9 +1,6 @@
 #include <engine/entry_point.hpp>
 #include <engine/resources_manager.hpp>
 
-#include "texture_demo/texture_demo.hpp"
-#include "3d_demo/3d_demo.hpp"
-#include "gltf_demo/gltf_demo.hpp"
 #include "postfx_demo/postfx_demo.hpp"
 #include "freecam_demo/freecam_demo.hpp"
 #include "viewport_demo/viewport_demo.hpp"
@@ -24,9 +21,6 @@ static engine::rc<engine::scene> get_start_scene() {
     using scene_ctor_t = engine::scene(*)();
 
     std::pair<std::string, scene_ctor_t> constructors[] = {
-        { "texture demo",   engine_demos::make_texture_demo },
-        { "3d demo",        engine_demos::make_3d_demo },
-        { "gltf demo",      engine_demos::make_gltf_demo },
         { "postfx demo",    engine_demos::make_postfx_demo },
         { "freecam demo",   engine_demos::make_freecam_demo },
         { "viewport demo",  engine_demos::make_viewport_demo },
@@ -36,5 +30,5 @@ static engine::rc<engine::scene> get_start_scene() {
         engine::get_rm().dbg_add_scene_constructor(name, ctor);
     }
 
-    return engine::get_rm().load_mut<engine::scene>("collision_demo.yml");
+    return engine::get_rm().load_mut<engine::scene>("gltf_demo.yml");
 }

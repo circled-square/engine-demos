@@ -90,9 +90,9 @@ namespace cube {
 namespace imgui_dbgmenu {
     struct state {
         static constexpr std::array<const char*, 7> scene_names {
-            "texture demo",
-            "3d demo",
-            "gltf demo",
+            "texture_demo.yml",
+            "3d_demo.yml",
+            "gltf_demo.yml",
             "postfx demo",
             "freecam demo",
             "viewport demo",
@@ -350,7 +350,6 @@ namespace demo_freecam {
     struct cam_state  {
         bool up = false, down = false, left = false, right = false, fwd = false, bwd = false, go_faster = false;
         float current_y_rotation = 0.f;
-        float move_speed = 30.0;
     };
     constexpr engine::script_vtable cam_script {
         .construct = [](node&, const std::any&){ return std::any(cam_state()); },
@@ -406,10 +405,20 @@ namespace demo_freecam {
                 (s.up   ?1:0) - (s.down?1:0),
                 (s.bwd  ?1:0) - (s.fwd ?1:0)
             );
-            movement *= s.move_speed * app_chan.from_app().delta * (s.go_faster ? 3.0 : 1.0);
+
+            float move_speed = 30.0;
+            movement *= move_speed * app_chan.from_app().delta * (s.go_faster ? 3.0 : 1.0);
 
             father.set_transform(glm::translate(father.transform(), movement));
         },
+    };
+
+    constexpr engine::script_vtable set_shader_script {
+        .construct = [](node& self, const std::any&){
+            for(auto& primitive : self.children()[0].get<engine::mesh>().primitives())
+                primitive.primitive_material.set_shader(get_rm().load<engine::shader>("shaders/3d/light_falloff.glsl"));
+            return std::any(std::monostate());
+        }
     };
 }
 namespace demo_3d {
@@ -594,6 +603,7 @@ const std::pair<const char*, engine::script_vtable> exported_plugins[] {
     std::pair("viewport_demo.viewport_cube", demo_viewport::viewport_cube_script),
     std::pair("texture_demo.imgui_windows", demo_texture::windows_script),
     std::pair("freecam_demo.cam", demo_freecam::cam_script),
+    std::pair("freecam_demo.set_shader", demo_freecam::set_shader_script),
     std::pair("collision_demo.stillcube", demo_collision::stillcube_script),
     std::pair("collision_demo.kbdcube", demo_collision::kbdcube_script),
     std::pair("3d_demo.cube_spawner", demo_3d::cube_spawner_script),

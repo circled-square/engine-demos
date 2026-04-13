@@ -34,11 +34,13 @@ namespace engine_demos {
             engine::camera(),
             glm::translate(mat4(1), vec3(0, 2, 0))
         );
-        
+
+        auto castle_node = get_rm().load_mut<nodetree_blueprint>("castlebl.glb")->into_node();
+        castle_node->attach_script(stateless_script::from(scripts_lib, "freecam_demo.set_shader"));
+
         camera_father_node->add_child(std::move(camera_node));
         dither_viewport->add_child(std::move(camera_father_node));
-        get_rm().set_default_3d_shader(get_rm().load<shader>("shaders/3d/light_falloff.glsl"));
-        dither_viewport->add_child(get_rm().load_mut<nodetree_blueprint>("castlebl.glb")->into_node());
+        dither_viewport->add_child(std::move(castle_node));
         dither_viewport_mesh->add_child(std::move(dither_viewport));
         root->add_child(std::move(dither_viewport_mesh));
 

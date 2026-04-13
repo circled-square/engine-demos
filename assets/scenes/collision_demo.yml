@@ -1,3 +1,5 @@
+# This demo illustrates collisions and different collision behaviours
+
 scene:
   # name: collision_demo #does it even make sense to define this instead of just using the filename? for now we just use the filename
   # onload_script: plugins/scripts/lib/scripts:init_collision_demo

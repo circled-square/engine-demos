@@ -1,0 +1,19 @@
+# This demo demonstrates a few things:
+# - 3d rendering
+# - use of custom texture on a raw-data 3d mesh (the cube)
+# - use of the scene tree
+# - use of script to programmatically generate a scene (container_script)
+# - use of script to manipulate objects' transforms (camera and centre cube)
+# - custom script state for the camera (the time, which would be unnecessary since it can be retrieved through the application_channel_t)
+# - custom uniform passed to the (centre) cube's material (to offset its texture), without having any effect on other instances (other cubes) of the same material (done through its own script)
+
+scene:
+  root:
+    children:
+    - name: imgui_menu
+      script: plugins/scripts/lib/scripts:imgui_dbgmenu
+    - name: camera
+      payload: { type: camera }
+      script: plugins/scripts/lib/scripts:3d_demo.cam
+    - name: cubes_container
+      script: plugins/scripts/lib/scripts:3d_demo.cube_spawner

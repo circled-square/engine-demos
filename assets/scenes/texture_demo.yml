@@ -1,0 +1,12 @@
+# This is a fairly simple, lower level demo meant to show direct use of the GAL (Graphics Abstraction Layer) library.
+# All rendering is done on 2 imgui windows; the first simply shows a texture, the second shows the result of
+# rendering to a framebuffer object, using a custom shader. The use of anything under engine:: namespace is avoided
+# wherever possible.
+
+scene:
+  root:
+    children:
+    - name: imgui_menu
+      script: plugins/scripts/lib/scripts:imgui_dbgmenu
+    - name: imgui_tex_node # one node for both imgui windows
+      script: plugins/scripts/lib/scripts:texture_demo.imgui_windows
