@@ -1,0 +1,2 @@
+Checks: 'cppcoreguidelines-*,readability-*,-readability-avoid-c-arrays,-readability-use-concise-preprocessor-directives,-readability-identifier-length'
+ExcludeHeaderFilterRegex: '(glm|rapidyaml|glad|stb)'

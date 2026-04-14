@@ -8,7 +8,7 @@
 #include <engine/scene/renderer/mesh/material/materials.hpp>
 #include <engine/utils/constants.hpp>
 
-// This 3d rendered demo shows postfx shaders applied to a gltf-imported model
+// This 3d rendered demo shows usage of the render of a node subtree as texture for a mesh
 
 namespace engine_demos {
     using namespace engine;
