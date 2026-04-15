@@ -1,2 +1,5 @@
-Checks: 'cppcoreguidelines-*,readability-*,-readability-avoid-c-arrays,-readability-use-concise-preprocessor-directives,-readability-identifier-length'
+Checks: 'cppcoreguidelines-*,readability-*,
+    -readability-avoid-c-arrays, -readability-use-concise-preprocessor-directives, -readability-identifier-length, -readability-math-missing-parentheses,
+    -readability-magic-numbers, -readability-braces-around-statements, -readability-function-cognitive-complexity, -readability-avoid-nested-conditional-operator,
+    -readability-redundant-inline-specifier'
 ExcludeHeaderFilterRegex: '(glm|rapidyaml|glad|stb)'
