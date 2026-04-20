@@ -20,9 +20,10 @@ static engine::rc<engine::scene> get_start_scene() {
     //all scenes need to know the names of all other scenes for imgui_menu_node to work correctly
     using scene_ctor_t = engine::scene(*)();
     std::array<std::pair<std::string, scene_ctor_t>, 3> constructors = {
-        std::pair{ "postfx demo",    engine_demos::make_postfx_demo },
-        std::pair{ "freecam demo",   engine_demos::make_freecam_demo },
-        std::pair{ "viewport demo",  engine_demos::make_viewport_demo },
+        std::pair<std::string, scene_ctor_t>
+        { "postfx demo",    engine_demos::make_postfx_demo },
+        { "freecam demo",   engine_demos::make_freecam_demo },
+        { "viewport demo",  engine_demos::make_viewport_demo },
     };
 
     for (auto& [name, ctor] : constructors) {
