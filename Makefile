@@ -30,7 +30,8 @@ build_%:
 	#install $*
 	cmake --install build/$* --prefix install_dir/$*/
 
-run_%: $*
+run_%: 
+	make build_$*
 	install_dir/$*/main*
 
 run_tests: build_debug build_release build_debug_windows build_release_windows
