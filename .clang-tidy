@@ -7,4 +7,4 @@ Checks: '
     -readability-else-after-return, -readability-redundant-declaration,
     -cppcoreguidelines-pro-type-reinterpret-cast, -cppcoreguidelines-pro-type-union-access
 '
-ExcludeHeaderFilterRegex: '(glm|rapidyaml|glad|stb|ankerl|dylib|tinygltf)'
+ExcludeHeaderFilterRegex: '(glm|glfw|rapidyaml|glad|stb|ankerl|dylib|tinygltf|imgui)'
