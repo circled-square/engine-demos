@@ -20,7 +20,7 @@ CMAKE_clangtidy_FLAGS=-DCMAKE_CXX_CLANG_TIDY=clang-tidy ${CMAKE_debug_FLAGS} -DC
 .NOTPARALLEL: all run_tests
 
 #build everything;
-all: build_release build_debug_windows build_release_windows
+all: build_debug build_release build_debug_windows build_release_windows 
 
 build_%:
 	#configure $*
