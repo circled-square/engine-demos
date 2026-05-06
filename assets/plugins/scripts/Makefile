@@ -9,6 +9,10 @@ all:
 	make linux_debug
 
 linux:
+	make linux_release
+	make linux_debug
+
+linux_release:
 	cmake ${CMAKE_RELEASE_FLAGS} -B build/linux/
 	cmake --build build/linux/
 	cmake --install build/linux/ --prefix ./
