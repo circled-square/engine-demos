@@ -160,7 +160,7 @@ namespace imgui_dbgmenu {
 
                     ImGui::Text("hist size: %lu", s.delta_time_hist.size());
 
-                    ImGui::Text("%u / %u free ECS ids, in %u intervals", get_rm().get_ecs().get_freed_ids(), get_rm().get_ecs().get_ids_in_use(), get_rm().get_ecs().get_free_id_intervals_count());
+                    ImGui::Text("%u / %u free ECS ids, in %u intervals", get_rm().ecs().get_freed_ids(), get_rm().ecs().get_id_pool_size(), get_rm().ecs().get_free_id_intervals_count());
 
                     ImGui::Unindent(16.f);
                 }
@@ -196,7 +196,7 @@ namespace imgui_dbgmenu {
                         } else {
                             n_name = std::format("(root) {}", n->name());
                         }
-                        n_name = std::format("{} [id: {}]", n_name, n->get_ecs_id());
+                        n_name = std::format("{} [id: {}]", n_name, n->ecs_id());
 
 
                         const char* name = n_name.empty() ? "(empty name)" : n_name.c_str();
@@ -468,7 +468,7 @@ namespace demo_3d {
 
                         //artificially increase depth of tree
                         for(int i = 0; i < nodetree_depth; i++) {
-                            auto p = node::make(c->name());
+                            auto p = node::make(std::string(c->name()));
                             p->add_child(std::move(c));
                             c = std::move(p);
                         }
