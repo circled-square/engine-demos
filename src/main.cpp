@@ -3,7 +3,6 @@
 
 #include "postfx_demo/postfx_demo.hpp"
 #include "freecam_demo/freecam_demo.hpp"
-#include "viewport_demo/viewport_demo.hpp"
 
 static engine::rc<engine::scene> get_start_scene();
 
@@ -23,7 +22,6 @@ static engine::rc<engine::scene> get_start_scene() {
         std::pair<std::string, scene_ctor_t>
         { "postfx demo",    engine_demos::make_postfx_demo },
         { "freecam demo",   engine_demos::make_freecam_demo },
-        { "viewport demo",  engine_demos::make_viewport_demo },
     };
 
     for (auto& [name, ctor] : constructors) {

@@ -11,9 +11,15 @@ scene:
   root:
     children:
     - name: imgui_menu
-      script: plugins/scripts/lib/scripts:imgui_dbgmenu
+      script:
+        path: plugins/scripts/lib/scripts
+        name: imgui_dbgmenu
     - name: camera
       payload: { type: camera }
-      script: plugins/scripts/lib/scripts:3d_demo.cam
+      script:
+        path: plugins/scripts/lib/scripts
+        name: 3d_demo.cam
     - name: cubes_container
-      script: plugins/scripts/lib/scripts:3d_demo.cube_spawner
+      script:
+        path: plugins/scripts/lib/scripts
+        name: 3d_demo.cube_spawner

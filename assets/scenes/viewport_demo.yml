@@ -1,0 +1,28 @@
+# This 3d rendered demo shows usage of the render of a node subtree as texture for a mesh
+
+scene:
+  # onload_script: plugins/scripts/lib/scripts:init_collision_demo
+  root:
+    children:
+    - name: menu
+      script:
+        path: plugins/scripts/lib/scripts
+        name: imgui_dbgmenu
+
+    - name: transparent_viewport # the viewport does not have to be child of the mesh that shows its texture (though it's tidier, in my opinion)
+      script:
+        path: plugins/scripts/lib/scripts
+        name: viewport_demo.transparent_viewport
+        params: [ 512 ] # resolution (both horizontal and vertical) of the viewport's texture
+      children:
+      - load: gltf_demo.yml # postfx_demo.yml
+
+    - name: viewport_cube
+      script:
+        path: plugins/scripts/lib/scripts
+        name: viewport_demo.viewport_cube
+        params: [ ../transparent_viewport ] # absolute path to the viewport of which to display the texture
+
+    - name: camera
+      payload: { type: camera }
+      transform: { position: [0,1,2] , look_at: { center: [0,0,0] } }
