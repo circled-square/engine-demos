@@ -1,0 +1,45 @@
+
+# This 3d rendered demo shows postfx shaders applied to a gltf-imported model
+
+scene:
+  root:
+    children:
+    - name: imgui_menu
+      script:
+        path: plugins/scripts/lib/scripts
+        name: imgui_dbgmenu
+    - name: camera
+      payload: { type: camera }
+      transform: { position: [0,50,250] , look_at: { center: [0,50,0], up: [0,1,0] } } # look_at could have been omitted as that is the direction the camera would have defaulted to anyway
+    - name: transparent_vp_mesh
+      script:
+        path: plugins/scripts/lib/scripts  children:
+        name: postfx_demo.halftone_vp # initialize viewport  - name: transparent_vp
+      children:
+      - name: halftone_vp_mesh
+        children:
+        - name: halftone_vp
+          children:
+          - name: castle
+            load: castlebl.glb
+            script:
+              path: plugins/scripts/lib/scripts
+              name: gltf_demo.rotate
+#         auto halftone_viewport = node::make("halftone_vp", engine::viewport(glm::vec2(1./2.)));
+#         auto halftone_viewport_mesh = node::make("halftone_vp_mesh", mesh(material(
+#             get_rm().load<shader>("shaders/postfx/halftone.glsl"),
+#             halftone_viewport->get<viewport>().fbo().get_texture()
+#         ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
+#
+#         auto transparent_viewport = node::make("transparent_vp", engine::viewport(glm::vec2(1./3.)));
+#
+#         auto transparent_viewport_mesh = node::make("transparent_vp_mesh", mesh(material(
+#             get_rm().load<shader>("shaders/postfx/transparent.glsl"),
+#             transparent_viewport->get<viewport>().fbo().get_texture()
+#         ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
+#
+#         halftone_viewport->add_child(make_gltf_demo_node_tree());
+#         halftone_viewport_mesh->add_child(std::move(halftone_viewport));
+#         transparent_viewport->add_child(std::move(halftone_viewport_mesh));
+#         transparent_viewport_mesh->add_child(std::move(transparent_viewport));
+#         root->add_child(std::move(transparent_viewport_mesh));

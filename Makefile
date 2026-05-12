@@ -3,7 +3,6 @@
 # set of aliases actually, since i do not actually use Make's features (which
 # would be useless since cmake already checks whether what you're asking to build is already built)
 
-
 # add -fsanitize=address to check memory errors
 CXXFLAGS="-Wall -Werror -Wpedantic -Wnon-virtual-dtor"
 GENERATOR="Ninja" # set to "Unix Makefiles" if ninja is unavailable
@@ -34,11 +33,15 @@ run_%:
 	make build_$*
 	install_dir/$*/main*
 
-run_tests: build_debug build_release build_debug_windows build_release_windows
-	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/debug run_engine_tests
+run_tests_release: build_release
 	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/release run_engine_tests
-	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/debug_windows run_engine_tests
-	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/release_windows run_engine_tests
+
+run_tests: build_debug build_release build_debug_windows build_release_windows
+	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/release run_engine_tests
+	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/debug run_engine_tests
+	# the correct thing to do would be have the executables pointing to the correct path for the dlls, since this is difficult to do for tests and we don't actually plan on shipping them setting WINEPATH is fine; note that ${shell pwd} does not actually get the Makefile path but rather the path from which make was called, as such this target must be called at the Makefile path to make sure windows tests work
+	WINEPATH="${shell pwd}/install_dir/release_windows/" CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/release_windows run_engine_tests
+	WINEPATH="${shell pwd}/install_dir/debug_windows/" CTEST_OUTPUT_ON_FAILURE=1 ninja -C build/debug_windows run_engine_tests
 
 clean_%:
 	rm -rf build/$* install_dir/$*

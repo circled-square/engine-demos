@@ -6,7 +6,6 @@ CMAKE_DEBUG_FLAGS=-DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_MESSAGE=LAZY -G Ninja
 all: 
 	make linux
 	make windows
-	make linux_debug
 
 linux:
 	make linux_release

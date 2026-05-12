@@ -7,6 +7,10 @@ scene:
   root:
     children:
     - name: imgui_menu
-      script: plugins/scripts/lib/scripts:imgui_dbgmenu
+      script:
+        path: plugins/scripts/lib/scripts
+        name: imgui_dbgmenu
     - name: imgui_tex_node # one node for both imgui windows
-      script: plugins/scripts/lib/scripts:texture_demo.imgui_windows
+      script:
+        path: plugins/scripts/lib/scripts
+        name: texture_demo.imgui_windows

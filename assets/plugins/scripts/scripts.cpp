@@ -95,7 +95,7 @@ namespace imgui_dbgmenu {
             "gltf_demo.yml",
             "postfx demo",
             "freecam demo",
-            "viewport demo",
+            "viewport_demo.yml",
             "collision_demo.yml",
         };
 
@@ -510,10 +510,30 @@ namespace demo_3d {
     };
 }
 namespace demo_gltf {
-    static constexpr engine::script_vtable rotate_script {
+    constexpr engine::script_vtable rotate_script {
         .process = [](node& n, std::any&, engine::application_channel_t& c) {
             n.set_transform(glm::rotate(n.transform(), c.from_app().delta * pi / 16, y_axis));
         },
+    };
+}
+namespace demo_postfx {
+    constexpr engine::script_vtable transparent_viewport_mesh {
+        .process = [](node& self, std::any&, engine::application_channel_t& c) {
+            // auto halftone_viewport = node::make("halftone_vp", engine::viewport(glm::vec2(1./2.)));
+
+            // auto halftone_viewport_mesh = node::make("halftone_vp_mesh", mesh(material(
+                // get_rm().load<shader>("shaders/postfx/halftone.glsl"),
+                // halftone_viewport->get<viewport>().fbo().get_texture()
+            // ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
+
+            // auto transparent_viewport = node::make("transparent_vp", engine::viewport(glm::vec2(1./3.)));
+
+            // auto transparent_viewport_mesh = node::make("transparent_vp_mesh", mesh(material(
+                // get_rm().load<shader>("shaders/postfx/transparent.glsl"),
+                // transparent_viewport->get<viewport>().fbo().get_texture()
+            // ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
+
+        }
     };
 }
 namespace demo_collision {
@@ -524,6 +544,7 @@ namespace demo_collision {
 
     constexpr engine::script_vtable stillcube_script {
         .construct = [](node& self, const std::any&) {
+            // TODO: load from gltf
             self.add_child(node::make("colshape", cube::make_col_shape()));
 
             self.set_payload(cube::make_mesh());
@@ -536,6 +557,7 @@ namespace demo_collision {
     };
     constexpr engine::script_vtable kbdcube_script {
         .construct = [](node& self, const std::any&) {
+            // TODO: load from gltf
             auto colshape_node = node::make("colshape", cube::make_col_shape());
             colshape_node->set_collision_behaviour(engine::node_collision_behaviour {
                 .passes_events_to_father = true,
@@ -585,17 +607,36 @@ namespace demo_collision {
 namespace demo_viewport {
     constexpr engine::script_vtable viewport_cube_script {
         .construct = [](node& self, const std::any& params) {
-            auto fbo_texture = std::any_cast<rc<gal::texture>>(params);
-            auto shader = engine::get_rm().load<engine::shader>(engine::internal_resource_name_t::simple_3d_shader);
-            auto vao = engine::get_rm().new_from(cube::make_vao());
+            return params; // TODO: don't do this, see .process() for how this is currently done
+        },
+        .process = [](node& self, std::any& state, engine::application_channel_t& c) {
+            static bool inited = false; // TODO: do this stuff under .construct(); currently it is here because nodes are not aware of their father when they are constructed, which is clearly stupid and wrong
+            if(!inited) {
+                auto script_params = std::any_cast<std::vector<std::string>>(state);
+                auto vp_path = script_params.at(0);
+                auto& vp_texture = self.get_descendant_from_path(vp_path).get<engine::viewport>().fbo().get_texture();
 
-            self.set_payload(engine::mesh(engine::material(shader, fbo_texture), vao));
+                auto shader = engine::get_rm().load<engine::shader>(engine::internal_resource_name_t::simple_3d_shader);
+                auto vao = engine::get_rm().new_from(cube::make_vao());
+
+                self.set_payload(engine::mesh(engine::material(shader, vp_texture), vao));
+
+                inited = true;
+                state = std::monostate();
+            }
+
+            c.to_app().clear_color = glm::vec4(0.2, 0.2, 0.2, 1.0);
+            self.set_transform(glm::rotate(self.transform(), c.from_app().delta * pi / 16, y_axis));
+        },
+    };
+    constexpr engine::script_vtable transparent_viewport_script {
+        .construct = [](node& self, const std::any& params) {
+            auto script_params = std::any_cast<std::vector<std::string>>(params);
+            long long resolution = std::stoll(script_params.at(0));
+
+            self.set_payload(engine::viewport(get_rm().new_from(gal::texture::empty({resolution, resolution}, 4))));
 
             return std::any(std::monostate());
-        },
-        .process = [](node& n, std::any&, engine::application_channel_t& c) {
-            c.to_app().clear_color = glm::vec4(0.2, 0.2, 0.2, 1.0);
-            n.set_transform(glm::rotate(n.transform(), c.from_app().delta * pi / 16, y_axis));
         },
     };
 }
@@ -604,6 +645,7 @@ const std::pair<const char*, engine::script_vtable> exported_plugins[] {
     std::pair("imgui_dbgmenu", imgui_dbgmenu::script),
     std::pair("gltf_demo.rotate", demo_gltf::rotate_script),
     std::pair("viewport_demo.viewport_cube", demo_viewport::viewport_cube_script),
+    std::pair("viewport_demo.transparent_viewport", demo_viewport::transparent_viewport_script),
     std::pair("texture_demo.imgui_windows", demo_texture::windows_script),
     std::pair("freecam_demo.cam", demo_freecam::cam_script),
     std::pair("freecam_demo.set_shader", demo_freecam::set_shader_script),
