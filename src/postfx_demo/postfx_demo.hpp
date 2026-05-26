@@ -1,14 +1,12 @@
 #ifndef POSTFX_DEMO_HPP
 #define POSTFX_DEMO_HPP
 
-#include <memory>
-#include <forward_list>
 #include <engine/scene.hpp>
 
 namespace engine_demos {
     engine::scene make_postfx_demo();
 
-    std::unique_ptr<engine::node> make_postfx_demo_node_tree();
+    engine::node make_postfx_demo_node_tree();
 }
 
 #endif //POSTFX_DEMO_HPP

@@ -9,6 +9,7 @@
 #include <engine/resources_manager/rc.hpp>
 #include <engine/utils/format_glm.hpp>
 #include <engine/utils/lin_algebra.hpp>
+#include <engine/utils/dfs.hpp>
 #include <imgui.h>
 #include <queue>
 #include <set>
@@ -107,8 +108,8 @@ namespace imgui_dbgmenu {
         float max_delta_time_total = 3.f;
     };
     constexpr engine::script_vtable script {
-        .construct = [](node&, const std::any&) { return std::any(state()); },
-        .process = [](node& n, std::any& ss, engine::application_channel_t& c) {
+        .construct = [](node, const std::any&) { return std::any(state()); },
+        .process = [](node n, std::any& ss, engine::application_channel_t& c) {
             ImGui::SetCurrentContext(c.from_app().get_current_imgui_context());
 
             state& s = *std::any_cast<state>(&ss);
@@ -169,64 +170,68 @@ namespace imgui_dbgmenu {
                 if(ImGui::CollapsingHeader("Scene Hierarchy")) {
                     ImGui::Indent(16.f);
                     // find root
-                    node* root = &n;
+                    node root = n;
                     while(true) {
-                        EXPECTS(root);
-                        node* new_root = root->get_father();
-                        if(!new_root)
+                        EXPECTS(root.ecs_id() != engine::null_ecs_id);
+                        node new_root = root.get_father();
+                        if(new_root.ecs_id() == engine::null_ecs_id)
                             break;
                         else
                             root = new_root;
                     }
-                    ENSURES(root);
+                    ENSURES(root.ecs_id() != engine::null_ecs_id);
                     //dfs
                     struct stack_tuple_t {
-                        node* n;
-                        enum {preorder, postorder} visit_type;
+                        node n;
+                        enum { preorder, postorder } visit_type;
                     };
                     std::vector<stack_tuple_t> dfs_stack;
-                    dfs_stack.push_back({ std::move(root), stack_tuple_t::preorder });
+                    dfs_stack.push_back({ root, stack_tuple_t::preorder });
                     while(!dfs_stack.empty()) {
                         auto[n, visit_type] = dfs_stack.back();
                         dfs_stack.pop_back();
                         std::string n_name;
 
-                        if(n->get_father()) {
-                            n_name = n->name();
+                        if(n.get_father().ecs_id() != engine::null_ecs_id) {
+                            n_name = n.name();
                         } else {
-                            n_name = std::format("(root) {}", n->name());
+                            n_name = std::format("(root) {}", n.name());
                         }
-                        n_name = std::format("{} [id: {}]", n_name, n->ecs_id());
+                        n_name = std::format("{} [id: {}]", n_name, n.ecs_id());
 
 
                         const char* name = n_name.empty() ? "(empty name)" : n_name.c_str();
-                        std::string tooltip_contents = std::format("{}", engine::extract_position(n->transform()));
 
 
                         if(visit_type == stack_tuple_t::preorder) {
-                            if(n->children().empty()) {
+                            if(n.children().empty()) {
                                 // this is a leaf (just print the name)
                                 ImGui::Indent(8.f);
                                 ImGui::Text("- %s", name);
 
-                                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+                                    std::string tooltip_contents = std::format("{}", engine::extract_position(n.transform()));
                                     ImGui::SetTooltip(tooltip_contents.c_str());
+                                }
 
                                 ImGui::Unindent(8.f);
                             } else {
                                 // this is not a leaf (print the name in a collapsing header and its children under it)
-                                ImGuiTreeNodeFlags flags = n->children().size() >= 5 ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
-                                std::string imgui_id = std::format("{}##{}", name, (void*)n);
+                                ImGuiTreeNodeFlags flags = n.children().size() >= 5 ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
+
+                                std::string imgui_id = std::format("{}##{}", name, n.ecs_id());
                                 bool collapsing_header_uncollapsed = ImGui::CollapsingHeader(imgui_id.c_str(), flags);
-                                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+                                    std::string tooltip_contents = std::format("{}", engine::extract_position(n.transform()));
                                     ImGui::SetTooltip(tooltip_contents.c_str());
+                                }
 
                                 if(collapsing_header_uncollapsed) {
                                     ImGui::Indent(8.f);
                                     dfs_stack.push_back({n, stack_tuple_t::postorder});
 
-                                    for(std::int64_t i = n->children().size()-1; i >= 0; i--)
-                                        dfs_stack.push_back({ &n->children()[i], stack_tuple_t::preorder });
+                                    for(std::int64_t i = n.children().size()-1; i >= 0; i--)
+                                        dfs_stack.push_back({ n.children()[i], stack_tuple_t::preorder });
                                 }
                             }
                         } else {
@@ -307,8 +312,8 @@ namespace demo_texture {
     };
 
     constexpr engine::script_vtable windows_script {
-        .construct = [](node&, const std::any&) { return std::any(window_state()); },
-        .process = [](node& n, std::any& ss, engine::application_channel_t& c) {
+        .construct = [](node, const std::any&) { return std::any(window_state()); },
+        .process = [](node n, std::any& ss, engine::application_channel_t& c) {
             window_state& s = *std::any_cast<window_state>(&ss);
 
             ImGui::SetCurrentContext(c.from_app().get_current_imgui_context());
@@ -355,9 +360,9 @@ namespace demo_freecam {
         float current_y_rotation = 0.f;
     };
     constexpr engine::script_vtable cam_script {
-        .construct = [](node&, const std::any&){ return std::any(cam_state()); },
-        .process = [](node& n, std::any& ss, engine::application_channel_t& app_chan) {
-            node& father = n.get_father_checked();
+        .construct = [](node, const std::any&){ return std::any(cam_state()); },
+        .process = [](node n, std::any& ss, engine::application_channel_t& app_chan) {
+            node father = n.get_father_checked();
             cam_state& s = *std::any_cast<cam_state>(&ss);
 
             for(const engine::event_variant_t& event : app_chan.from_app().events) {
@@ -417,7 +422,7 @@ namespace demo_freecam {
     };
 
     constexpr engine::script_vtable set_shader_script {
-        .construct = [](node& self, const std::any&){
+        .construct = [](node self, const std::any&){
             for(auto& primitive : self.children()[0].get<engine::mesh>().primitives())
                 primitive.primitive_material.set_shader(get_rm().load<engine::shader>("shaders/3d/light_falloff.glsl"));
             return std::any(std::monostate());
@@ -436,7 +441,7 @@ namespace demo_3d {
     };
 
     constexpr engine::script_vtable cube_spawner_script {
-        .construct = [](node& n, const std::any&) {
+        .construct = [](node n, const std::any&) {
             gal::vertex_array cube_vao = cube::make_vao();
             engine::material cube_material(
                 get_rm().load<engine::shader>("shaders/3d/custom_uniform_example.glsl"),
@@ -464,12 +469,12 @@ namespace demo_3d {
 
 
                         if(glm::uvec3(x,y,z) == glm::uvec3(0))
-                            c->attach_script(engine::stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "3d_demo.custom_uniform_example"));
+                            c.attach_script(engine::stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "3d_demo.custom_uniform_example"));
 
                         //artificially increase depth of tree
                         for(int i = 0; i < nodetree_depth; i++) {
-                            auto p = node::make(std::string(c->name()));
-                            p->add_child(std::move(c));
+                            auto p = node::make(std::string(c.name()));
+                            p.add_child(std::move(c));
                             c = std::move(p);
                         }
                         n.add_child(std::move(c));
@@ -481,8 +486,8 @@ namespace demo_3d {
         },
     };
     constexpr engine::script_vtable cam_script {
-        .construct = [](node&, const std::any&) { return std::any(cam_state()); },
-        .process = [](node& n, std::any& ss, engine::application_channel_t& app_chan) {
+        .construct = [](node, const std::any&) { return std::any(cam_state()); },
+        .process = [](node n, std::any& ss, engine::application_channel_t& app_chan) {
 
             cam_state& s = *std::any_cast<cam_state>(&ss);
             s.time += app_chan.from_app().delta;
@@ -494,8 +499,8 @@ namespace demo_3d {
         }
     };
     constexpr engine::script_vtable custom_uniform_example_script{
-        .construct = [](node&, const std::any&) { return std::any(0.f); },
-        .process = [](node& n, std::any& state, engine::application_channel_t& app_chan) {
+        .construct = [](node, const std::any&) { return std::any(0.f); },
+        .process = [](node n, std::any& state, engine::application_channel_t& app_chan) {
             EXPECTS(state.type() == typeid(float));
             float& last_delta = *std::any_cast<float>(&state);
             float delta_diff = last_delta - app_chan.from_app().delta;
@@ -511,28 +516,27 @@ namespace demo_3d {
 }
 namespace demo_gltf {
     constexpr engine::script_vtable rotate_script {
-        .process = [](node& n, std::any&, engine::application_channel_t& c) {
+        .process = [](node n, std::any&, engine::application_channel_t& c) {
             n.set_transform(glm::rotate(n.transform(), c.from_app().delta * pi / 16, y_axis));
         },
     };
 }
 namespace demo_postfx {
     constexpr engine::script_vtable transparent_viewport_mesh {
-        .process = [](node& self, std::any&, engine::application_channel_t& c) {
+        .process = [](node self, std::any&, engine::application_channel_t& c) {
             // auto halftone_viewport = node::make("halftone_vp", engine::viewport(glm::vec2(1./2.)));
 
             // auto halftone_viewport_mesh = node::make("halftone_vp_mesh", mesh(material(
                 // get_rm().load<shader>("shaders/postfx/halftone.glsl"),
-                // halftone_viewport->get<viewport>().fbo().get_texture()
+                // halftone_viewport.get<viewport>().fbo().get_texture()
             // ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
 
             // auto transparent_viewport = node::make("transparent_vp", engine::viewport(glm::vec2(1./3.)));
 
             // auto transparent_viewport_mesh = node::make("transparent_vp_mesh", mesh(material(
                 // get_rm().load<shader>("shaders/postfx/transparent.glsl"),
-                // transparent_viewport->get<viewport>().fbo().get_texture()
+                // transparent_viewport.get<viewport>().fbo().get_texture()
             // ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
-
         }
     };
 }
@@ -543,7 +547,7 @@ namespace demo_collision {
     };
 
     constexpr engine::script_vtable stillcube_script {
-        .construct = [](node& self, const std::any&) {
+        .construct = [](node self, const std::any&) {
             // TODO: load from gltf
             self.add_child(node::make("colshape", cube::make_col_shape()));
 
@@ -551,28 +555,22 @@ namespace demo_collision {
 
             return std::any(std::monostate());
         },
-        .process = [](node& n, std::any&, engine::application_channel_t& app_chan) {
+        .process = [](node n, std::any&, engine::application_channel_t& app_chan) {
             n.set_transform(glm::rotate(n.transform(), app_chan.from_app().delta * pi / 8, z_axis + y_axis / 2.f));
         },
     };
     constexpr engine::script_vtable kbdcube_script {
-        .construct = [](node& self, const std::any&) {
+        .construct = [](node self, const std::any&) {
             // TODO: load from gltf
             auto colshape_node = node::make("colshape", cube::make_col_shape());
-            colshape_node->set_collision_behaviour(engine::node_collision_behaviour {
-                .passes_events_to_father = true,
-            });
-            self.add_child(std::move(colshape_node));
 
-            self.set_collision_behaviour(engine::node_collision_behaviour {
-                .moves_away_on_collision = true,
-            });
+            self.add_child(std::move(colshape_node));
 
             self.set_payload(cube::make_mesh());
 
             return std::any(demo_collision::kbdcube_state());
         },
-        .process = [](node& n, std::any& state, engine::application_channel_t& app_chan) {
+        .process = [](node n, std::any& state, engine::application_channel_t& app_chan) {
             EXPECTS(state.type() == typeid(demo_collision::kbdcube_state));
             demo_collision::kbdcube_state& s = *std::any_cast<demo_collision::kbdcube_state>(&state);
 
@@ -606,12 +604,11 @@ namespace demo_collision {
 }
 namespace demo_viewport {
     constexpr engine::script_vtable viewport_cube_script {
-        .construct = [](node& self, const std::any& params) {
+        .construct = [](node self, const std::any& params) {
             return params; // TODO: don't do this, see .process() for how this is currently done
         },
-        .process = [](node& self, std::any& state, engine::application_channel_t& c) {
-            static bool inited = false; // TODO: do this stuff under .construct(); currently it is here because nodes are not aware of their father when they are constructed, which is clearly stupid and wrong
-            if(!inited) {
+        .process = [](node self, std::any& state, engine::application_channel_t& c) {
+            if(state.type() == typeid(std::vector<std::string>)) {
                 auto script_params = std::any_cast<std::vector<std::string>>(state);
                 auto vp_path = script_params.at(0);
                 auto& vp_texture = self.get_descendant_from_path(vp_path).get<engine::viewport>().fbo().get_texture();
@@ -621,7 +618,6 @@ namespace demo_viewport {
 
                 self.set_payload(engine::mesh(engine::material(shader, vp_texture), vao));
 
-                inited = true;
                 state = std::monostate();
             }
 
@@ -630,7 +626,7 @@ namespace demo_viewport {
         },
     };
     constexpr engine::script_vtable transparent_viewport_script {
-        .construct = [](node& self, const std::any& params) {
+        .construct = [](node self, const std::any& params) {
             auto script_params = std::any_cast<std::vector<std::string>>(params);
             long long resolution = std::stoll(script_params.at(0));
 

@@ -21,10 +21,11 @@ scene:
         name: collision_demo.kbdcube
         args: []
       # load: cube_with_collision.glb
-      collision_behaviour: { moves_away: true }
+      collision_behaviour: { move_away: true, pass_event_to_father: false, }
       transform: { position: [0,1,0] }
     - name: stillcube
       script:
         path: plugins/scripts/lib/scripts
         name: collision_demo.stillcube
+      collision_behaviour: { pass_event_to_father: false, }
       # load: cube_with_collision.glb

@@ -18,13 +18,13 @@ namespace engine_demos {
         auto root = node::make("");
         auto scripts_lib = get_rm().load<dylib::library>("plugins/scripts/lib/scripts");
 
-        root->add_child(node::make("menu", stateless_script::from(scripts_lib, "imgui_dbgmenu")));
+        root.add_child(node::make("menu", stateless_script::from(scripts_lib, "imgui_dbgmenu")));
 
         auto dither_viewport = node::make("dither_vp", engine::viewport(vec2(1./6.)));
 
         auto dither_viewport_mesh = node::make("dither_vp_mesh", mesh(material(
             get_rm().load<shader>("shaders/postfx/dither.glsl"),
-            dither_viewport->get<viewport>().fbo().get_texture()
+            dither_viewport.get<viewport>().fbo().get_texture()
         ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
 
         auto camera_father_node = node::make("camera_father");
@@ -36,13 +36,13 @@ namespace engine_demos {
         );
 
         auto castle_node = get_rm().load_mut<nodetree_blueprint>("castlebl.glb")->into_node();
-        castle_node->attach_script(stateless_script::from(scripts_lib, "freecam_demo.set_shader"));
+        castle_node.attach_script(stateless_script::from(scripts_lib, "freecam_demo.set_shader"));
 
-        camera_father_node->add_child(std::move(camera_node));
-        dither_viewport->add_child(std::move(camera_father_node));
-        dither_viewport->add_child(std::move(castle_node));
-        dither_viewport_mesh->add_child(std::move(dither_viewport));
-        root->add_child(std::move(dither_viewport_mesh));
+        camera_father_node.add_child(std::move(camera_node));
+        dither_viewport.add_child(std::move(camera_father_node));
+        dither_viewport.add_child(std::move(castle_node));
+        dither_viewport_mesh.add_child(std::move(dither_viewport));
+        root.add_child(std::move(dither_viewport_mesh));
 
         return engine::scene("freecam demo", std::move(root), std::move(to_app));
     }
