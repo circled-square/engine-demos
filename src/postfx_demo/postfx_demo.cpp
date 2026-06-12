@@ -13,13 +13,16 @@ namespace engine_demos {
     scene make_postfx_demo() {
         auto root = make_postfx_demo_node_tree();
 
-        root.add_child(node::make("menu", stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu")));
+        root.add_child(
+            node("menu")
+            .attach_script(stateless_script::from(get_rm().load<dylib::library>("plugins/scripts/lib/scripts"), "imgui_dbgmenu"))
+        );
 
         return scene("postfx demo", std::move(root));
     }
 
     static node make_gltf_demo_node_tree() {
-        auto root = node::make("");
+        auto root = node("");
 
 
         get_rm().set_default_3d_shader(std::nullopt);
@@ -28,27 +31,34 @@ namespace engine_demos {
 
         root.add_child(std::move(castle));
 
-        root.add_child(node::make("camera", engine::camera(), glm::translate(glm::mat4(1), glm::vec3(0,50,250))));
+        root.add_child(node("camera", glm::translate(glm::mat4(1), glm::vec3(0,50,250))).set<camera>(camera()));
 
         return root;
     }
 
 
     node make_postfx_demo_node_tree() {
-        auto root = node::make("");
+        auto root = node("");
 
-        auto halftone_viewport = node::make("halftone_vp", engine::viewport(glm::vec2(1./2.)));
+        auto halftone_viewport = node("halftone_vp").set<viewport>(engine::viewport(glm::vec2(1./2.)));
 
-        auto halftone_viewport_mesh = node::make("halftone_vp_mesh", mesh(material(
-            get_rm().load<shader>("shaders/postfx/halftone.glsl"),
-            halftone_viewport.get<viewport>().fbo().get_texture()
-        ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
+        auto halftone_viewport_mesh =
+            node("halftone_vp_mesh")
+            .set<mesh>(
+                mesh(
+                    material(
+                        get_rm().load<shader>("shaders/postfx/halftone.glsl"),
+                        halftone_viewport.get<viewport>()->fbo().get_texture()
+                    ),
+                    get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)
+                )
+            );
 
-        auto transparent_viewport = node::make("transparent_vp", engine::viewport(glm::vec2(1./3.)));
+        auto transparent_viewport = node("transparent_vp").set<viewport>(engine::viewport(glm::vec2(1./3.)));
 
-        auto transparent_viewport_mesh = node::make("transparent_vp_mesh", mesh(material(
+        auto transparent_viewport_mesh = node("transparent_vp_mesh").set<mesh>(mesh(material(
             get_rm().load<shader>("shaders/postfx/transparent.glsl"),
-            transparent_viewport.get<viewport>().fbo().get_texture()
+            transparent_viewport.get<viewport>()->fbo().get_texture()
         ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
 
 

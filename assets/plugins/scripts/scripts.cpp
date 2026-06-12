@@ -423,7 +423,7 @@ namespace demo_freecam {
 
     constexpr engine::script_vtable set_shader_script {
         .construct = [](node self, const std::any&){
-            for(auto& primitive : self.children()[0].get<engine::mesh>().primitives())
+            for(auto& primitive : self.children()[0].get<engine::mesh>()->primitives())
                 primitive.primitive_material.set_shader(get_rm().load<engine::shader>("shaders/3d/light_falloff.glsl"));
             return std::any(std::monostate());
         }
@@ -431,10 +431,10 @@ namespace demo_freecam {
 }
 namespace demo_3d {
     constexpr int cube_amount_constant = 10; // n_of_cubes = (cube_amount_constant * 2 + 1) ^ 3
-    constexpr float camera_relative_distance = 1.0f;
     constexpr int nodetree_depth = 2; // number of useless layers to add (useful to artificially make the scene more CPU intensive without making it more GPU intensive)
-    constexpr float rand_displacement_amount = 100;
-    constexpr float cube_scale = .5f;
+    constexpr float cam_distance = 10.f;
+    constexpr float rand_displace_amount = 50.f;
+    constexpr float cube_scale = 1.f;
 
     struct cam_state  {
         float time = 0.f;
@@ -448,8 +448,7 @@ namespace demo_3d {
                 get_rm().load<gal::texture>("example.png")
             );
             cube_material.get_custom_uniforms().push_back(std::make_pair(std::string("u_custom"), engine::uniform_value_variant(0.f)));
-            // *cube_material.get_shader();
-            engine::mesh cube(std::move(cube_material), get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
+            engine::mesh cube_mesh(std::move(cube_material), get_rm().new_from<gal::vertex_array>(std::move(cube_vao)));
 
             constexpr int k = cube_amount_constant;
             std::minstd_rand rng((std::random_device()()));
@@ -459,13 +458,15 @@ namespace demo_3d {
                 for(int y = -k; y <= k; y++) {
                     for(int z = -k; z <= k; z++) {
                         using glm::vec3;
-                        vec3 displacement = vec3{x,y,z} == vec3(0) ? vec3(0) : vec3{x,y,z} + rand_displacement_amount * powf((float)distr(rng), 1.5f) * (vec3{x,y,z} == vec3{0} ? vec3{0} : glm::normalize(vec3{distr(rng), distr(rng), distr(rng)}));
+                        vec3 displacement =
+                            vec3{x,y,z} == vec3(0)
+                            ? vec3(0)
+                            : rand_displace_amount * glm::vec3{distr(rng), distr(rng), distr(rng)};
 
-                        auto c = node::make(
+                        auto c = node(
                             std::format("cube_{},{},{}", x, y, z),
-                            cube,
                             glm::scale(glm::translate(glm::mat4(1), displacement), glm::vec3(cube_scale))
-                        );
+                        ).set<engine::mesh>(cube_mesh);
 
 
                         if(glm::uvec3(x,y,z) == glm::uvec3(0))
@@ -473,7 +474,7 @@ namespace demo_3d {
 
                         //artificially increase depth of tree
                         for(int i = 0; i < nodetree_depth; i++) {
-                            auto p = node::make(std::string(c.name()));
+                            auto p = node(std::string(c.name()));
                             p.add_child(std::move(c));
                             c = std::move(p);
                         }
@@ -492,8 +493,7 @@ namespace demo_3d {
             cam_state& s = *std::any_cast<cam_state>(&ss);
             s.time += app_chan.from_app().delta;
 
-            float distance = cube_amount_constant * camera_relative_distance;
-            glm::vec3 pos = distance * glm::vec3{ sin(s.time), sin(s.time), cos(s.time) };
+            glm::vec3 pos = cam_distance * glm::vec3{ sin(s.time), sin(s.time), cos(s.time) };
 
             n.set_transform(glm::inverse(glm::lookAt(pos, glm::vec3(0), glm::vec3(0,1,0))));
         }
@@ -505,8 +505,9 @@ namespace demo_3d {
             float& last_delta = *std::any_cast<float>(&state);
             float delta_diff = last_delta - app_chan.from_app().delta;
 
-            n.get<engine::mesh>()
-                .primitives()[0].primitive_material
+            auto& n_mesh = *n.get<engine::mesh>();
+
+            n_mesh.primitives()[0].primitive_material
                 .get_custom_uniforms()[0].second = delta_diff * 200.f;
 
 
@@ -549,9 +550,9 @@ namespace demo_collision {
     constexpr engine::script_vtable stillcube_script {
         .construct = [](node self, const std::any&) {
             // TODO: load from gltf
-            self.add_child(node::make("colshape", cube::make_col_shape()));
+            self.add_child(node("colshape").set<rc<const engine::collision_shape>>(cube::make_col_shape()));
 
-            self.set_payload(cube::make_mesh());
+            self.set<engine::mesh>(cube::make_mesh());
 
             return std::any(std::monostate());
         },
@@ -562,11 +563,11 @@ namespace demo_collision {
     constexpr engine::script_vtable kbdcube_script {
         .construct = [](node self, const std::any&) {
             // TODO: load from gltf
-            auto colshape_node = node::make("colshape", cube::make_col_shape());
+            auto colshape_node = node("colshape").set<rc<const engine::collision_shape>>(cube::make_col_shape());
 
             self.add_child(std::move(colshape_node));
 
-            self.set_payload(cube::make_mesh());
+            self.set<engine::mesh>(cube::make_mesh());
 
             return std::any(demo_collision::kbdcube_state());
         },
@@ -611,12 +612,12 @@ namespace demo_viewport {
             if(state.type() == typeid(std::vector<std::string>)) {
                 auto script_params = std::any_cast<std::vector<std::string>>(state);
                 auto vp_path = script_params.at(0);
-                auto& vp_texture = self.get_descendant_from_path(vp_path).get<engine::viewport>().fbo().get_texture();
+                auto& vp_texture = self.get_descendant_from_path(vp_path).get<engine::viewport>()->fbo().get_texture();
 
                 auto shader = engine::get_rm().load<engine::shader>(engine::internal_resource_name_t::simple_3d_shader);
                 auto vao = engine::get_rm().new_from(cube::make_vao());
 
-                self.set_payload(engine::mesh(engine::material(shader, vp_texture), vao));
+                self.set<engine::mesh>(engine::mesh(engine::material(shader, vp_texture), vao));
 
                 state = std::monostate();
             }
@@ -630,7 +631,7 @@ namespace demo_viewport {
             auto script_params = std::any_cast<std::vector<std::string>>(params);
             long long resolution = std::stoll(script_params.at(0));
 
-            self.set_payload(engine::viewport(get_rm().new_from(gal::texture::empty({resolution, resolution}, 4))));
+            self.set<engine::viewport>(engine::viewport(get_rm().new_from(gal::texture::empty({resolution, resolution}, 4))));
 
             return std::any(std::monostate());
         },

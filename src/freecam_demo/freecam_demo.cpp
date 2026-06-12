@@ -15,28 +15,31 @@ namespace engine_demos {
 
     scene make_freecam_demo() {
         application_channel_t::to_app_t to_app { .wants_mouse_cursor_captured = true };
-        auto root = node::make("");
+        auto root = node("");
         auto scripts_lib = get_rm().load<dylib::library>("plugins/scripts/lib/scripts");
 
-        root.add_child(node::make("menu", stateless_script::from(scripts_lib, "imgui_dbgmenu")));
+        root.add_child(node("menu").attach_script(stateless_script::from(scripts_lib, "imgui_dbgmenu")));
 
-        auto dither_viewport = node::make("dither_vp", engine::viewport(vec2(1./6.)));
+        auto dither_viewport =
+            node("dither_vp")
+            .set<viewport>(engine::viewport(vec2(1./6.)));
 
-        auto dither_viewport_mesh = node::make("dither_vp_mesh", mesh(material(
-            get_rm().load<shader>("shaders/postfx/dither.glsl"),
-            dither_viewport.get<viewport>().fbo().get_texture()
-        ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
+        auto dither_viewport_mesh =
+            node("dither_vp_mesh")
+            .set<mesh>(mesh(material(
+                get_rm().load<shader>("shaders/postfx/dither.glsl"),
+                dither_viewport.get<viewport>()->fbo().get_texture()
+            ), get_rm().load<gal::vertex_array>(internal_resource_name_t::whole_screen_vao)));
 
-        auto camera_father_node = node::make("camera_father");
-        auto camera_node = node::make("camera",
-            stateless_script::from(scripts_lib, "freecam_demo.cam"),
-            std::monostate(),
-            engine::camera(),
-            glm::translate(mat4(1), vec3(0, 2, 0))
-        );
+        auto camera_father_node = node("camera_father");
+        auto camera_node =
+            node("camera", glm::translate(mat4(1), vec3(0, 2, 0)))
+            .set<camera>(engine::camera())
+            .attach_script(stateless_script::from(scripts_lib, "freecam_demo.cam"));
 
-        auto castle_node = get_rm().load_mut<nodetree_blueprint>("castlebl.glb")->into_node();
-        castle_node.attach_script(stateless_script::from(scripts_lib, "freecam_demo.set_shader"));
+        auto castle_node =
+            get_rm().load_mut<nodetree_blueprint>("castlebl.glb")->into_node()
+            .attach_script(stateless_script::from(scripts_lib, "freecam_demo.set_shader"));
 
         camera_father_node.add_child(std::move(camera_node));
         dither_viewport.add_child(std::move(camera_father_node));
